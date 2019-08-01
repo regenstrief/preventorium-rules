@@ -1,0 +1,123 @@
+rule "TDAP Recommend"
+   dialect "mvel"
+   enabled true
+   when
+      FhirPatient(ageInYears > 18 )
+   then
+      drools.setFocus("TDAP_RECOMMEND") 
+end
+
+rule "All Adults Tetanus Recommendation"
+   dialect "mvel"
+   enabled true
+   agenda-group "TDAP_RECOMMEND"
+   activation-group "TDAP_RECOMMEND"
+   salience -1
+   when
+      $patient : Patient()
+      $requestContext: CDSRequestContext()
+      $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+
+      // Answer to "Have you been vaccinated with Td (tetanus, diphtheria) or Tdap (tetanus, diphtheria, and acellular pertussis) within the past 10 years?"
+      // 1=yes, 2=no, 3=unsure
+      $tdap11 : String(this in ("2", "3") ) from getAnswerValueString($response, "TDAP_1.1") 
+	  
+   then
+	
+	// Recommend Tdap
+	List cards = new ArrayList();	
+
+        String ind = IndicatorEnum.INFO.name();
+
+       String txt = "Check with your doctor if you have been vaccinated for tetanus within the past 10 years. All adults should be vaccinated for tetanus every 10 years, once as an adult with Tdap (tetanus, diphtheria, and acellular pertussis) otherwise with with Td (tetanus, diphtheria).<br/> <a className=\"resource\" href=\"https://www.cdc.gov/vaccines/hcp/vis/vis-statements/tdap.pdf\">CDC Guidelines for TDAP</a> ";
+
+       if ( "2".equals($tdap11) ) {
+             txt = "All adults should be vaccinated for tetanus every 10 years, once as an adult with Tdap (tetanus, diphtheria, and acellular pertussis) otherwise with with Td (tetanus, diphtheria).<br/> <a className=\"resource\" href=\"https://www.cdc.gov/vaccines/hcp/vis/vis-statements/tdap.pdf\">CDC Guidelines for TDAP</a> ";
+
+            ind = IndicatorEnum.WARNING.name();
+      }
+
+    cards.add(createImmunizationRecommendation(
+	ind, 
+		"Vaccinations", 
+		"Yearly", 
+		txt, 
+		"http://www.ama-assn.org/go/cpt", 
+		"90715", 
+		"TDAP VACCINE 7 YRS" , 
+		0));
+	  
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+	resp1.putValue("CARDS", cards);
+	insert(resp1);
+
+end
+
+rule "All Adults Tetanus Soft Recommendation"
+   dialect "mvel"
+   enabled false
+   agenda-group "TDAP_RECOMMEND"
+   activation-group "TDAP_RECOMMEND"
+   salience -1
+   when
+      $patient : Patient()
+      $requestContext: CDSRequestContext()
+      $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+
+      // Answer to "Have you been vaccinated with Td (tetanus, diphtheria) or Tdap (tetanus, diphtheria, and acellular pertussis) within the past 10 years?"
+      // 1=yes, 2=no, 3=unsure
+      $tdap11 : String(this == "3") from getAnswerValueString($response, "TDAP_1.1") 
+	  
+   then
+	
+	// Soft Recommendation for tetanus vaccination
+	List cards = new ArrayList();	
+    cards.add(createImmunizationRecommendation(
+	IndicatorEnum.INFO.name(), 
+		"Vaccinations", 
+		"Yearly", 
+		"Check with your doctor if you have been vaccinated for tetanus within the past 10 years. All adults should be vaccinated for tetanus every 10 years, once as an adult with Tdap (tetanus, diphtheria, and acellular pertussis) otherwise with with Td (tetanus, diphtheria).<br/> <a className=\"resource\" href=\"https://www.cdc.gov/vaccines/hcp/vis/vis-statements/tdap.pdf\">CDC Guidelines for TDAP</a> ", 
+		"http://www.ama-assn.org/go/cpt", 
+		"90715", 
+		"TDAP VACCINE 7 YRS" , 
+		0));
+	  
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+	resp1.putValue("CARDS", cards);
+	insert(resp1);
+
+end
+
+rule "Pregnant Adults TDAP Recommendation"
+   dialect "mvel"
+   enabled true
+   agenda-group "TDAP_RECOMMEND"
+   activation-group "TDAP_RECOMMEND"
+   salience -2
+   when
+      $patient : Patient()
+      $requestContext: CDSRequestContext()
+      $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+	  
+	  // Answered NO to "Have you had a TDAP during this pregnancy?"
+      Boolean(booleanValue == true) from codedAnswerEquals($response, "TDAP_2.1.1", "http://regenstrief.org/CDS/code/yesno", "2")
+	  
+   then
+	
+	// Recommend Tdap
+	List cards = new ArrayList();	
+    cards.add(createImmunizationRecommendation(
+	IndicatorEnum.WARNING.name(), 
+		"Vaccinations", 
+		"Yearly", 
+		"Pregnant women should have Tdap during each pregnancy, preferably in the early part of gestation, weeks 27-36, regardless of history of receiving Tdap.<br/> <a className=\"resource\" href=\"https://www.cdc.gov/vaccines/hcp/vis/vis-statements/tdap.pdf\">CDC Guidelines for TDAP</a>", 
+		"http://www.ama-assn.org/go/cpt", 
+		"90715", 
+		"TDAP VACCINE 7 YRS" , 
+		0));
+	  
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+	resp1.putValue("CARDS", cards);
+	insert(resp1);
+
+end

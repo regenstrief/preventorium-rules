@@ -1,0 +1,180 @@
+rule "CRC Screen Survey"
+   dialect "mvel"
+   enabled true
+   when
+      FhirPatient(ageInYears >= 40 )
+      FhirPatient(ageInYears < 75 )
+   then
+      drools.setFocus("CRC_SCREENING") 
+end
+
+
+
+rule "CRC Rule 1 - No Family History CRC"
+	dialect "mvel"
+	enabled true
+	agenda-group "CRC_SCREENING"
+	salience 500
+	
+when
+	$patient : Patient()
+	
+	// Patient does NOT have First Degree Relation (FDR) that had CRC before age 60
+        // Patient does NOT have 2 or more FDR that have CRC at any age
+//	(
+              (
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|425213009", true)) and
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|422581008", true)) and
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|422375001", true)) and
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|422985007", true))
+              )
+//        )
+
+then
+
+//    cacheAssert(drools, "noFDRHistoryCRC")
+	  
+	QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
+	Group group =  builder
+		.startGroup("5", "http://regenstrief.org/cds/", "PreventionSurvey", "Relatives with CRC", "name2", true)
+			.startQuestion("5.1", "http://regenstrief.org/cds/", "FDR_CRC", "Do you have any close relatives (Parent, Sibling, Child) that had CRC before age 60 or more than one with CRC?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
+				.startGroup("5.1g", "http://regenstrief.org/cds/", "PreventionSurvey-FDR_CRC", "")
+				.endGroup()
+			.endQuestion()  
+		.endGroup()
+	.getGroup();
+
+
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("CRC CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
+	resp1.putValue("GROUP", group);
+	insert(resp1);
+	
+end
+
+
+rule "CRC Rule 2a - Family History CRC NO SCREEN >= 50"
+	dialect "mvel"
+	enabled true
+	agenda-group "CRC_SCREENING"
+	salience 400
+	
+when
+	$patient : Patient()
+        FhirPatient(ageInYears >= 50 )
+	
+	// Patient does NOT have First Degree Relation (FDR) that had CRC before age 60
+        // Patient does NOT have 2 or more FDR that have CRC at any age
+        (
+                  List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|425213009", true)) or
+                  List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|422581008", true)) or
+                  List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|422375001", true)) or
+                  List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|422985007", true))
+        )
+
+	// No History of past FIT, FIT-DNA, or Colonoscopy
+     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(1825), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "45378"), getWithinLastDayJoda(1825), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+
+then
+	  
+	  
+	QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
+	Group group =  builder
+		.startGroup("7", "http://regenstrief.org/cds/", "PreventionSurvey", "Recent FIT or Colonoscopy", "name2", true)
+			.startQuestion("7.1", "http://regenstrief.org/cds/", "PAST_COLONOSCOPY_CRC", "Have you had a Colonoscopy in the past 5 years?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
+				.startGroup("7.1g", "http://regenstrief.org/cds/", "PreventionSurvey-RecentFITorColonoscopy", "")
+				.endGroup()
+			.endQuestion()  
+		.endGroup()
+	.getGroup();
+
+
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("CRC CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
+	resp1.putValue("GROUP", group);
+	insert(resp1);
+		
+end
+
+rule "CRC Rule 2b - Family History CRC NO SCREEN >=40 < 50"
+	dialect "mvel"
+	enabled true
+	agenda-group "CRC_SCREENING"
+	salience 300
+	
+when
+	$patient : Patient()
+        FhirPatient(ageInYears >= 40 )
+        FhirPatient(ageInYears < 50 )
+	
+	// Patient does NOT have First Degree Relation (FDR) that had CRC before age 60
+        // Patient does NOT have 2 or more FDR that have CRC at any age
+        (
+                  List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|425213009", true)) or
+                  List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|422581008", true)) or
+                  List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|422375001", true)) or
+                  List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|422985007", true))
+        )
+
+	// No History of past FIT, FIT-DNA, or Colonoscopy
+	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, "http://loinc.org|57803-9", getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.OBSERVATION, "ANY") ) 
+	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://loinc.org", "82956-4"), getWithinLastDayJoda(1095), getWithinLastDayJoda(0), ResultTypeEnum.OBSERVATION, "ANY") )  
+	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(3650), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "45378"), getWithinLastDayJoda(3650), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+
+then
+	  
+	  
+	QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
+	Group group =  builder
+		.startGroup("6", "http://regenstrief.org/cds/", "PreventionSurvey", "Recent FIT or Colonoscopy", "name2", true)
+			.startQuestion("6.1", "http://regenstrief.org/cds/", "PAST_FIT_CRC", "Have you had a FIT in the past year or FIT-DNA (Colon Guard) in the past 3 years or a Colonoscopy in the past 10 years?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
+				.startGroup("6.1g", "http://regenstrief.org/cds/", "PreventionSurvey-RecentFITorColonoscopy", "")
+				.endGroup()
+			.endQuestion()  
+		.endGroup()
+	.getGroup();
+
+
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("CRC CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
+	resp1.putValue("GROUP", group);
+	insert(resp1);
+		
+end
+
+
+rule "CRC Rule 3 - No History Recent CRC Screen"
+	dialect "mvel"
+	enabled true
+	agenda-group "CRC_SCREENING"
+	salience 200
+when
+
+	$patient : Patient()
+        FhirPatient(ageInYears >= 50 )
+        FhirPatient(ageInYears < 75 )
+	  
+	// No History of past FIT, FIT-DNA, or Colonoscopy
+	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, "http://loinc.org|57803-9", getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.OBSERVATION, "ANY") ) 
+	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://loinc.org", "82956-4"), getWithinLastDayJoda(1095), getWithinLastDayJoda(0), ResultTypeEnum.OBSERVATION, "ANY") )  
+	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(3650), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "45378"), getWithinLastDayJoda(3650), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+
+then
+	  
+	  
+	QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
+	Group group =  builder
+		.startGroup("6", "http://regenstrief.org/cds/", "PreventionSurvey", "Recent FIT or Colonoscopy", "name2", true)
+			.startQuestion("6.1", "http://regenstrief.org/cds/", "PAST_FIT_CRC", "Have you had a FIT in the past year or FIT-DNA (Colon Guard) in the past 3 years or a Colonoscopy in the past 10 years?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
+				.startGroup("6.1g", "http://regenstrief.org/cds/", "PreventionSurvey-RecentFITorColonoscopy", "")
+				.endGroup()
+			.endQuestion()  
+		.endGroup()
+	.getGroup();
+
+
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("CRC CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
+	resp1.putValue("GROUP", group);
+	insert(resp1);
+		
+end

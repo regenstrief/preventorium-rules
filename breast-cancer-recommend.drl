@@ -1,0 +1,253 @@
+rule "BREAST CANCER Screen Recommendation"
+   dialect "mvel"
+   enabled true
+   when
+      FhirPatient(ageInYears >= 40 )
+      Patient(gender=="female")
+   then
+      drools.setFocus("BREAST_CANCER_RECOMMENDATION") 
+end
+
+
+
+rule "BREAST CANCER Rule 1 R - Condition or Family History BREAST CANCER"
+	dialect "mvel"
+	enabled true
+	agenda-group "BREAST_CANCER_RECOMMENDATION"
+	activation-group "BREAST_CANCER_RECOMMENDATION"
+	salience 500
+	
+when
+	$patient : Patient()
+	FhirPatient(ageInYears >= 40 )
+	FhirPatient(ageInYears < 50 )
+
+        $requestContext: CDSRequestContext();
+        $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse");
+
+( 
+              Boolean(booleanValue == true) from codedAnswerEquals($response, "BC-1.1", "http://regenstrief.org/CDS/code/yesno", "1") 
+              or
+              List( size > 0 ) from collect(FamilyMemberHistory() from getFamilyMemberHistories(patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|174.9", true))
+              or                
+              List( size > 0 ) from collect(FamilyMemberHistory() from getFamilyMemberHistories(patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|175.9", true))
+	      or
+	      List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|V10.3", true))
+	      or
+	      List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|233.0", true))
+	      or
+	      List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|V84.01", true))
+	      or
+	      List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-10|Z85.3", true))
+	      or
+	      List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-10|C50", true))
+	      or
+	      List(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|254837009", true))
+	      or
+	      Boolean(booleanValue == true) from codedAnswerEquals($response, "BC-1.2", "http://regenstrief.org/CDS/code/yesno", "1") 
+	      or
+	      List(size > 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|174.9", ResultTypeEnum.CONDITION, "ANY"))
+	      or
+	      List(size > 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|175.9", ResultTypeEnum.CONDITION, "ANY"))
+	      or
+	      List(size > 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|V10.3", ResultTypeEnum.CONDITION, "ANY"))
+	      or
+	      List(size > 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|233.0", ResultTypeEnum.CONDITION, "ANY"))
+	      or
+	      List(size > 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|V84.01", ResultTypeEnum.CONDITION, "ANY"))
+	      or
+	      List(size > 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-10|Z85.3", ResultTypeEnum.CONDITION, "ANY"))
+	      or
+	      List(size > 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-10|C50", ResultTypeEnum.CONDITION, "ANY"))
+	      or
+	      List(size > 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://snomed.info/sct|254837009", ResultTypeEnum.CONDITION, "ANY"))
+	      or
+	      Boolean(booleanValue == true) from codedAnswerEquals($response, "BC-1.1", "http://regenstrief.org/CDS/code/yesno", "1") 
+	      or
+	      Boolean(booleanValue == true) from codedAnswerEquals($response, "BC-1.3", "http://regenstrief.org/CDS/code/yesno", "1") 
+
+)
+
+
+	// Patient does have First Degree Relation (FDR) that had CRC before age 60
+        // Patient does NOT have 2 or more FDR that have CRC at any age
+	// Answered NO to "Do you have any close relatives (Parent, Sibling, Child) that had CRC before age 60 or more than one with CRC?"
+	
+	// Patient does has First Degree Relation (FDR) that had CRC before age 60
+
+
+	// NO History of recent mammogram
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76090"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76091"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76092"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+
+then
+
+// Recommend RIV	
+	List cards = new ArrayList();	
+        cards.add(createProcedureRequest(
+          	IndicatorEnum.WARNING.name(),
+    	       "Cancer Screening",
+        	"Every 2 years",
+        	"You might be at a higher risk for Breast Cancer and you should get a mammogram every 2 years.", 
+    	        "http://www.ama-assn.org/go/cpt",
+		"76090", 
+        	"MAMMOGRAM EVERY 2 YEARS"
+                )
+         );
+	  
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+	resp1.putValue("CARDS", cards);
+	insert(resp1);
+	
+end
+
+
+rule "BREAST CANCER Rule 2 R - Condition or Family History BREAST CANCER"
+	dialect "mvel"
+	enabled true
+	agenda-group "BREAST_CANCER_RECOMMENDATION"
+	activation-group "BREAST_CANCER_RECOMMENDATION"
+	salience 500
+	
+when
+	$patient : Patient()
+	FhirPatient(ageInYears >= 40 )
+	FhirPatient(ageInYears < 50 )
+
+        $requestContext: CDSRequestContext();
+        $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse");
+
+	// Patient does have First Degree Relation (FDR) that had CRC before age 60
+        // Patient does NOT have 2 or more FDR that have CRC at any age
+	// Answered NO to "Do you have any close relatives (Parent, Sibling, Child) that had CRC before age 60 or more than one with CRC?"
+ 
+	
+	// Patient does has First Degree Relation (FDR) that had CRC before age 60
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|174.9", true))
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|175.9", true))
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|V10.3", true))
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|233.0", true))
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|V84.01", true))
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-10|Z85.3", true))
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-10|C50", true))
+                  List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://snomed.info/sct|254837009", true))
+                  List(size == 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|174.9", ResultTypeEnum.CONDITION, "ANY"))
+                  List(size == 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|175.9", ResultTypeEnum.CONDITION, "ANY"))
+                  List(size == 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|V10.3", ResultTypeEnum.CONDITION, "ANY"))
+                  List(size == 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|233.0", ResultTypeEnum.CONDITION, "ANY"))
+                  List(size == 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|V84.01", ResultTypeEnum.CONDITION, "ANY"))
+                  List(size == 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-10|Z85.3", ResultTypeEnum.CONDITION, "ANY"))
+                  List(size == 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://hl7.org/fhir/sid/icd-10|C50", ResultTypeEnum.CONDITION, "ANY"))
+                  List(size == 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://snomed.info/sct|254837009", ResultTypeEnum.CONDITION, "ANY"))
+                      
+       (
+                  Boolean(booleanValue == true) from codedAnswerEquals($response, "BC-1.4", "http://regenstrief.org/CDS/code/yesno", "1") 
+                        or
+                  Boolean(booleanValue == true) from codedAnswerEquals($response, "BC-1.5", "http://regenstrief.org/CDS/code/yesno", "1") 
+        )
+
+	// NO History of recent mammogram
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76090"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76091"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76092"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+
+then
+
+// Recommend RIV	
+	List cards = new ArrayList();	
+
+        cards.add(createProcedureRequest(
+          	IndicatorEnum.WARNING.name(),
+    	       "Cancer Screening",
+        	"Every 2 years",
+        	"You might want to consider getting a mammogram every 2 years.", 
+    	        "http://www.ama-assn.org/go/cpt",
+		"76090", 
+        	"MAMMOGRAM EVERY 2 YEARS"
+                )
+         );
+	  
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+	resp1.putValue("CARDS", cards);
+	insert(resp1);
+end
+
+
+rule "BREAST CANCER Rule 3 R - Between 50 and 75"
+	dialect "mvel"
+	enabled true
+	agenda-group "BREAST_CANCER_RECOMMENDATION"
+	activation-group "BREAST_CANCER_RECOMMENDATION"
+	salience 500
+	
+when
+	$patient : Patient()
+	FhirPatient(ageInYears >= 50 )
+	FhirPatient(ageInYears < 75 )
+
+	// NO History of recent mammogram
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76090"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76091"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76092"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+
+then
+
+// Recommend RIV	
+	List cards = new ArrayList();	
+
+        cards.add(createProcedureRequest(
+          	IndicatorEnum.WARNING.name(),
+    	       "Cancer Screening",
+        	"Every 2 years",
+        	"You should consider getting a mammogram every 2 years.", 
+    	        "http://www.ama-assn.org/go/cpt",
+		"76090", 
+        	"MAMMOGRAM EVERY 2 YEARS"
+                )
+         );
+	  
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+	resp1.putValue("CARDS", cards);
+	insert(resp1);
+end
+
+
+
+
+rule "BREAST CANCER Rule 3 R - Over 75"
+	dialect "mvel"
+	enabled true
+	agenda-group "BREAST_CANCER_RECOMMENDATION"
+	activation-group "BREAST_CANCER_RECOMMENDATION"
+	salience 500
+	
+when
+	$patient : Patient()
+	FhirPatient(ageInYears >= 75 )
+
+	// NO History of recent mammogram
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76090"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76091"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+	List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76092"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY") )  
+
+then
+
+// Recommend RIV	
+	List cards = new ArrayList();	
+
+        cards.add(createProcedureRequest(
+          	IndicatorEnum.INFO.name(),
+    	       "Cancer Screening",
+        	"Every 2 years",
+        	"You should consult with your doctor if you should get a mammogram every 2 years.", 
+    	        "http://www.ama-assn.org/go/cpt",
+		"76090", 
+        	"MAMMOGRAM EVERY 2 YEARS"
+                )
+         );
+	  
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+	resp1.putValue("CARDS", cards);
+	insert(resp1);
+end

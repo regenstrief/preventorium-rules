@@ -1,0 +1,92 @@
+rule "Lung CT Scan Recommendation"
+   dialect "mvel"
+   enabled true
+   when
+      FhirPatient(ageInYears >= 55 )
+      FhirPatient(ageInYears < 80 )
+   then
+      drools.setFocus("LUNG_CANCER_RECOMMEND") 
+end
+
+
+// ---------------------------
+// RULE 1
+//
+// Already had an Low Dose CT Chest Scan in past year
+//
+//
+rule "1 LUNG RECOMMEND CT SCAN"
+	dialect "mvel"
+	enabled true
+	agenda-group "LUNG_CANCER_RECOMMEND"
+	activation-group "LUNG_CANCER_RECOMMEND"
+	salience 500
+when
+	$patient : Patient()
+        FhirPatient(ageInYears >= 55 )
+        FhirPatient(ageInYears < 80 )
+
+	List(size > 0) from collect(FhirDiagnosticOrder() 
+		from getDiagnosticOrders(
+		patientRegistrations, "http://www.ama-assn.org/go/cpt|G0297", 
+		getWithinLastDayJoda(365), 
+		getWithinLastDayJoda(0)  ))
+
+then
+// DO NOTHING
+end
+
+
+// --------------------------------------------
+// RULE 2
+//
+// age >= 55 <= 80
+// ICD9 V15.82 or ICD10 Z87.891 codes
+// OR 
+// LINC Questionnaire Response
+// 
+// RECOMMEND CT SCAN AND CONSULTING
+
+rule "2 LUNG RECOMMEND CT SCAN"
+	dialect "mvel"
+	enabled true
+	agenda-group "LUNG_CANCER_RECOMMEND"
+	salience 80
+when
+	$patient : Patient()
+        FhirPatient(ageInYears >= 55 )
+        FhirPatient(ageInYears < 80 )
+
+        $requestContext: CDSRequestContext()
+        $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+
+	// Patient does have First Degree Relation (FDR) that had CRC before age 60
+        // Patient does NOT have 2 or more FDR that have CRC at any age
+	// Answered NO to "Do you have any close relatives (Parent, Sibling, Child) that had CRC before age 60 or more than one with CRC?"
+ 
+	Boolean(booleanValue == true) from codedAnswerEquals($response, "lung-1.1", "http://regenstrief.org/CDS/code/yesno", "1") 
+	$answerPacks : String() from getAnswerValueString($response, "lung-1.1.1") 
+	$answerSmokeYears : String() from getAnswerValueString($response, "lung-1.1.2") 
+	
+	Boolean(booleanValue == true) from smokingYearsExceedAnswers($answerPacks, $answerSmokeYears, 15)
+then
+
+        System.out.println(String.format("answerPacks=%s answerYears=%s", $answerPacks, $answerSmokeYears));
+//        System.out.println(String.format("answerPacks=%s", $answerPacks));
+	// Recommend RIV	
+	List cards = new ArrayList();	
+        cards.add(createDiagnosticOrder(
+          	IndicatorEnum.WARNING.name(),
+    	       "Cancer Screening",
+        	"This year", 
+        	"Adults aged 55 to 80 years who have a smoking history of 30 pack years or more, who currently smoke or have quit within the past 15 years should consult with a doctor about getting a chest CT scan.", 
+    	        "http://www.ama-assn.org/go/cpt", 
+         	"G0297", 
+        	"CHEST CT SCAN EVERY YEAR"
+                )
+         );
+	  
+	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+	resp1.putValue("CARDS", cards);
+	insert(resp1);
+end
