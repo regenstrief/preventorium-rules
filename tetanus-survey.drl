@@ -1,102 +1,95 @@
 rule "TDAP Survey"
-   dialect "mvel"
-   enabled true
-   when
-      FhirPatient(ageInYears > 18 )
-   then
-      drools.setFocus("TDAP_SURVEY") 
+  dialect "mvel"
+  enabled true
+  when
+    FhirPatient(ageInYears > 18 )
+  then
+    drools.setFocus("TDAP_SURVEY") 
 end
 
 rule "TDAP In Last 10 Years"
-	dialect "mvel"
-	enabled true
-	agenda-group "TDAP_SURVEY"
-	salience -1
+  dialect "mvel"
+  enabled true
+  agenda-group "TDAP_SURVEY"
+  salience -1
 	
-when
-	$patient : Patient()
+  when
+    $patient : Patient()
 	
-	// Tdap Given: CPT-4 Code: 90715  (CVX Code: 115)
-	// Td Given:     CPT-4 Code: 90714  (CVX Code: 113)
-	// Did not recieve Recieved TD OR TDAP in past 10 years?
-	List(size == 0) from collect(FhirResultObject() 
-	from getResult(
-	patientRegistrations, "http://hl7.org/fhir/sid/cvx|115", 
-	getWithinLastDayJoda(3650), 
-	getWithinLastDayJoda(0),  
-	ResultTypeEnum.IMMUNIZATION, 
-	"ANY"))
-	
-	
-	List(size == 0) from collect(FhirResultObject() 
-	from getResult(
-	patientRegistrations, "http://hl7.org/fhir/sid/cvx|113", 
-	getWithinLastDayJoda(365), 
-	getWithinLastDayJoda(0),  
-	ResultTypeEnum.IMMUNIZATION, 
-	"ANY"))
+    // Tdap Given: CPT-4 Code: 90715  (CVX Code: 115)
+    // Td Given:     CPT-4 Code: 90714  (CVX Code: 113)
+    // Did not recieve Recieved TD OR TDAP in past 10 years?
+    List(size == 0) from collect(FhirResultObject() 
+      from getResult(
+      patientRegistrations, "http://hl7.org/fhir/sid/cvx|115", 
+      getWithinLastDayJoda(3650), 
+      getWithinLastDayJoda(0),  
+      ResultTypeEnum.IMMUNIZATION, 
+      "ANY"))
 
-then
+    List(size == 0) from collect(FhirResultObject() 
+      from getResult(
+      patientRegistrations, "http://hl7.org/fhir/sid/cvx|113", 
+      getWithinLastDayJoda(365), 
+      getWithinLastDayJoda(0),  
+      ResultTypeEnum.IMMUNIZATION, 
+      "ANY"))
+
+  then
     QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
-	Group group =  builder
-		.startGroup("TDAP_1", "http://regenstrief.org/cds/", "PreventionSurvey", "Last tetanus shot", "name2", true)
-			.startQuestion("TDAP_1.1", "http://regenstrief.org/cds/", "TDAP", "In the last ten years, have you had a tetanus shot? This is either the Td vaccine (tetanus and diphtheria) or the Tdap vaccine. (Tetanus, diphtheria, and acellular pertussis)?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesnounsure"))
-				.startGroup("TDAP_1.1g", "http://regenstrief.org/cds/", "PreventionSurvey-TDAP", "")
-				.endGroup()
-			.endQuestion()  
-		.endGroup()
-	.getGroup();
+    Group group =  builder
+      .startGroup("TDAP_1", "http://regenstrief.org/cds/", "PreventionSurvey", "Last tetanus shot", "name2", true)
+        .startQuestion("TDAP_1.1", "http://regenstrief.org/cds/", "TDAP", "In the last ten years, have you had a tetanus shot? This is either the Td vaccine (tetanus and diphtheria) or the Tdap vaccine. (Tetanus, diphtheria, and acellular pertussis)?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesnounsure"))
+          .startGroup("TDAP_1.1g", "http://regenstrief.org/cds/", "PreventionSurvey-TDAP", "")
+          .endGroup()
+        .endQuestion()  
+      .endGroup()
+      .getGroup();
 
-// .startQuestion("TDAP_1.1", "http://regenstrief.org/cds/", "TDAP", "Have you been vaccinated with Td (tetanus, diphtheria) or Tdap (tetanus, diphtheria, and acellular pertussis) within the past 10 years?", AnswerFormatEnum.CHOICE, new  ResourceReferenceDt("#yesnounsure"))
-
-
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("TDAP Shot CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
-	resp1.putValue("GROUP", group);
-	insert(resp1);
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("TDAP Shot CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
+    resp1.putValue("GROUP", group);
+    insert(resp1);
 end
 
-
-
-
 rule "TDAP Pregnant"
-	dialect "mvel"
-	enabled true
-	agenda-group "TDAP_SURVEY"
-	salience -2
-	
-when
-	$patient : Patient(gender == "female")
-	FhirPatient(ageInYears < 55 )	
-	// Normal pregnancy within past 9 months?
-//	List(size > 0) from collect(FhirResultObject() 
-//	from getResult(
-//	patientRegistrations, "http://snomed.info/sct|72892002", 
-//	getWithinLastDayJoda(270), 
-//	getWithinLastDayJoda(0),  
-//	ResultTypeEnum.CONDITION, 
-//	"ANY"))
-then
-    
-	QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
+  dialect "mvel"
+  enabled true
+  agenda-group "TDAP_SURVEY"
+  salience -2
 
-	Group group =  builder
-		.startGroup("TDAP_2", "http://regenstrief.org/cds/", "PreventionSurvey", "Pregnancy", "name1", true)
-			.startQuestion("TDAP_2.1", "http://regenstrief.org/cds/", "PREG", "Are you pregnant?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesnounsure"))
-				.startGroup("TDAP_2.1g", "http://regenstrief.org/cds/", "PreventionSurvey-PREG", "")
-					.startExtension("http://hl7.org/fhir/StructureDefinition/questionnaire-enableWhen")
-						.addExtension("question", "TDAP_2.1")
-						.addExtension("answer", "http://regenstrief.org/CDS/code/yesnounsure", "1", "yes")
-					.endExtension()
-					.startQuestion("TDAP_2.1.1", "http://regenstrief.org/cds/", "PREG", "Have you had a TDAP during this pregnancy?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesnounsure"))
-						.startGroup("TDAP_2.1.1g", "http://regenstrief.org/cds/", "PreventionSurvey-PREG", "")
-						.endGroup()
-					.endQuestion()  
-				.endGroup()
-			.endQuestion()  
-		.endGroup()
-	.getGroup();
+  when
+    $patient : Patient(gender == "female")
+    FhirPatient(ageInYears < 55 )	
 
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("TDAP CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
-	resp1.putValue("GROUP", group);
-	insert(resp1);
+    // Normal pregnancy within past 9 months?
+    List(size > 0) from collect(FhirResultObject() 
+      from getResult(
+      patientRegistrations, "http://snomed.info/sct|72892002", 
+      getWithinLastDayJoda(270), 
+      getWithinLastDayJoda(0),  
+      ResultTypeEnum.CONDITION, 
+      "ANY"))
+  then
+    QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
+
+    Group group =  builder
+      .startGroup("TDAP_2", "http://regenstrief.org/cds/", "PreventionSurvey", "Pregnancy", "name1", true)
+        .startQuestion("TDAP_2.1", "http://regenstrief.org/cds/", "PREG", "Are you pregnant?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesnounsure"))
+          .startGroup("TDAP_2.1g", "http://regenstrief.org/cds/", "PreventionSurvey-PREG", "")
+            .startExtension("http://hl7.org/fhir/StructureDefinition/questionnaire-enableWhen")
+              .addExtension("question", "TDAP_2.1")
+              .addExtension("answer", "http://regenstrief.org/CDS/code/yesnounsure", "1", "yes")
+            .endExtension()
+            .startQuestion("TDAP_2.1.1", "http://regenstrief.org/cds/", "PREG", "Have you had a TDAP during this pregnancy?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesnounsure"))
+              .startGroup("TDAP_2.1.1g", "http://regenstrief.org/cds/", "PreventionSurvey-PREG", "")
+              .endGroup()
+            .endQuestion()  
+          .endGroup()
+        .endQuestion()  
+      .endGroup()
+      .getGroup();
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("TDAP CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
+    resp1.putValue("GROUP", group);
+    insert(resp1);
 end
