@@ -2,9 +2,9 @@ rule "Influenza Vaccine Survey"
   dialect "mvel"
   enabled true
   when
-    FhirPatient(ageInYears >= 18 )
+    FhirPatient(ageInYears >= 18)
   then
-    drools.setFocus("INFLUENZA_VACCINE") 
+    drools.setFocus("INFLUENZA_VACCINE")
 end
 
 rule "Flu Shot In Past Year"
@@ -12,37 +12,39 @@ rule "Flu Shot In Past Year"
   enabled true
   agenda-group "INFLUENZA_VACCINE"
   salience -1
-	
+
   when
     $patient : Patient()
-	
-    // Did not recieve IIV or RIV in the past  year?
-    List(size == 0) from collect(FhirResultObject() 
-      from getResult(
-      patientRegistrations, "http://hl7.org/fhir/sid/cvx|155", 
-      getWithinLastDayJoda(365), 
-      getWithinLastDayJoda(0),  
-      ResultTypeEnum.IMMUNIZATION, 
-      "ANY"))
 
-    List(size== 0) from collect(FhirResultObject() 
+    // Did not recieve IIV or RIV in the past  year?
+    List(size == 0) from collect(FhirResultObject()
       from getResult(
-      patientRegistrations, "http://hl7.org/fhir/sid/cvx|168,http://hl7.org/fhir/sid/cvx|144,http://hl7.org/fhir/sid/cvx|166 ", 
-      getWithinLastDayJoda(365), 
-      getWithinLastDayJoda(0),  
-      ResultTypeEnum.IMMUNIZATION, 
-      "ANY"))
-	
+      patientRegistrations, "http://hl7.org/fhir/sid/cvx|155",
+      getWithinLastDayJoda(365),
+      getWithinLastDayJoda(0),
+      ResultTypeEnum.IMMUNIZATION,
+      "ANY")
+    )
+
+    List(size== 0) from collect(FhirResultObject()
+      from getResult(
+      patientRegistrations, "http://hl7.org/fhir/sid/cvx|168,http://hl7.org/fhir/sid/cvx|144,http://hl7.org/fhir/sid/cvx|166 ",
+      getWithinLastDayJoda(365),
+      getWithinLastDayJoda(0),
+      ResultTypeEnum.IMMUNIZATION,
+      "ANY")
+    )
+
   then
     cacheAssert(drools, "noFluShotInLastYear")
-	  
+
     QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
     Group group =  builder
       .startGroup("2", "http://regenstrief.org/cds/", "PreventionSurvey", "Last flu shot", "name2", true)
         .startQuestion("2.1", "http://regenstrief.org/cds/", "FLU", "In the last year, have you had the influenza vaccine? (flu shot)?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesnounsure"))
           .startGroup("2.1g", "http://regenstrief.org/cds/", "PreventionSurvey-FLU", "")
           .endGroup()
-        .endQuestion()  
+        .endQuestion()
       .endGroup()
       .getGroup();
 
@@ -59,36 +61,36 @@ rule "Egg Allergy Ever"
 
   when
     $patient : Patient()
-	  
+
     // No history of egg allergy?
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "64305001"), null, null, ResultTypeEnum.OBSERVATION, "ANY"))
 
-  then 
+  then
     QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
 
     Group group =  builder
-    	.startGroup("1", "http://regenstrief.org/cds/", "PreventionSurvey", "Egg Allergy History", "name1", true)
-    		.startQuestion("1.1", "http://regenstrief.org/cds/", "EGG", "Are you allergic to egg or egg products?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
-    			.startGroup("1.1g", "http://regenstrief.org/cds/", "PreventionSurvey-EGG", "")
-    				.startExtension("http://hl7.org/fhir/StructureDefinition/questionnaire-enableWhen")
-    					.addExtension("question", "1.1")
-    					.addExtension("answer", "http://regenstrief.org/CDS/code/yesno", "1", "yes")
-    				.endExtension()
-    				.startQuestion("1.1.1", "http://regenstrief.org/cds/", "EGG", "Do you react to egg products by breaking out in hives?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
-    					.startGroup("1.1.1g", "http://regenstrief.org/cds/", "PreventionSurvey-EGG", "")
-    						.startExtension("http://hl7.org/fhir/StructureDefinition/questionnaire-enableWhen")
-    							.addExtension("question", "1.1.1")
-    							.addExtension("answer", "http://regenstrief.org/CDS/code/yesno", "1", "yes")
-    						.endExtension()
-    						.addQuestion("1.1.1.1", "http://regenstrief.org/cds/", "EGG", "Do you exhibit symptoms other than just hives (angioedema, respiratory distress, lightheadedness, ore recurrent emesis, or require epinephrine or some other emergency medical intervention?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
-    					.endGroup()
-    				.endQuestion()  
-    			.endGroup()
-    		.endQuestion()  
-    	.endGroup()
+      .startGroup("1", "http://regenstrief.org/cds/", "PreventionSurvey", "Egg Allergy History", "name1", true)
+        .startQuestion("1.1", "http://regenstrief.org/cds/", "EGG", "Are you allergic to egg or egg products?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
+          .startGroup("1.1g", "http://regenstrief.org/cds/", "PreventionSurvey-EGG", "")
+            .startExtension("http://hl7.org/fhir/StructureDefinition/questionnaire-enableWhen")
+              .addExtension("question", "1.1")
+              .addExtension("answer", "http://regenstrief.org/CDS/code/yesno", "1", "yes")
+            .endExtension()
+            .startQuestion("1.1.1", "http://regenstrief.org/cds/", "EGG", "Do you react to egg products by breaking out in hives?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
+              .startGroup("1.1.1g", "http://regenstrief.org/cds/", "PreventionSurvey-EGG", "")
+                .startExtension("http://hl7.org/fhir/StructureDefinition/questionnaire-enableWhen")
+                  .addExtension("question", "1.1.1")
+                  .addExtension("answer", "http://regenstrief.org/CDS/code/yesno", "1", "yes")
+                .endExtension()
+                .addQuestion("1.1.1.1", "http://regenstrief.org/cds/", "EGG", "Do you exhibit symptoms other than just hives (angioedema, respiratory distress, lightheadedness, ore recurrent emesis, or require epinephrine or some other emergency medical intervention?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
+              .endGroup()
+            .endQuestion()
+          .endGroup()
+        .endQuestion()
+      .endGroup()
     .getGroup();
 
-    DroolsRuleResponse resp1 = new DroolsRuleResponse("EggAllergy CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("EggAllergy CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " + getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
     resp1.putValue("GROUP", group);
     insert(resp1);
 end

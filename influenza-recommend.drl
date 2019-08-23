@@ -1,129 +1,131 @@
 rule "Influenza Vaccine Recommend"
-	dialect "mvel"
-	enabled true
-	when
-		FhirPatient(ageInYears >= 18 )
-	then
-		drools.setFocus("INFLUENZA_VACCINE_RECOMMEND") 
+  dialect "mvel"
+  enabled true
+  when
+    FhirPatient(ageInYears >= 18)
+  then
+    drools.setFocus("INFLUENZA_VACCINE_RECOMMEND")
 end
 
 rule "Over 40 Recommendation"
-	dialect "mvel"
-	enabled true
-	agenda-group "INFLUENZA_VACCINE_RECOMMEND"
-	activation-group "INFLUENZA_RECOMMEND"
-	salience 80
-	when
-		$patient : Patient()
-		$requestContext: CDSRequestContext()
-		$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+  dialect "mvel"
+  enabled true
+  agenda-group "INFLUENZA_VACCINE_RECOMMEND"
+  activation-group "INFLUENZA_RECOMMEND"
+  salience 80
+  when
+    $patient : Patient()
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-		// Answered NO or UNSURE to "In the past year, have you had either the inactivated influenza vaccine (IIV) or recombinant influenza vaccine (RIV)?" 1=yes, 2=no, 3=unsure
-		$flu21 : String(this in ("2", "3") ) from getAnswerValueString($response, "2.1") 
+    // Answered NO or UNSURE to "In the past year, have you had either the inactivated influenza vaccine (IIV) or recombinant influenza vaccine (RIV)?" 1=yes, 2=no, 3=unsure
+    $flu21 : String(this in ("2", "3")) from getAnswerValueString($response, "2.1")
 
-		// Answered NO to "Are you allergic to egg or egg products?"
-		Boolean(booleanValue == false) from codedAnswerEquals($response, "1.1", "http://regenstrief.org/CDS/code/yesno", "1")
+    // Answered NO to "Are you allergic to egg or egg products?"
+    Boolean(booleanValue == false) from codedAnswerEquals($response, "1.1", "http://regenstrief.org/CDS/code/yesno", "1")
 
-		// Patient is at least 40 year old
-		FhirPatient(ageInYears >= 40 )
+    // Patient is at least 40 year old
+    FhirPatient(ageInYears >= 40)
 
-	then
+  then
 
-		String ind = IndicatorEnum.INFO.name();
-		String txt = "Check with your doctor to see if you have had a flu shot. All adults aged 40 years or older should receive either the inactivated influenza vaccine (IIV) or recombinant influenza vaccine (RIV) during flu season each year.";
+    String ind = IndicatorEnum.INFO.name();
+    String txt = "Check with your doctor to see if you have had a flu shot. All adults aged 40 years or older should receive either the inactivated influenza vaccine (IIV) or recombinant influenza vaccine (RIV) during flu season each year.";
 
-		if ( "2".equals($flu21) ) {
-			ind = IndicatorEnum.WARNING.name();
-			txt = "All adults aged 40 years or older should receive either the inactivated influenza vaccine (IIV) or recombinant influenza vaccine (RIV) during flu season each year.";
-		}
+    if ( "2".equals($flu21)) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults aged 40 years or older should receive either the inactivated influenza vaccine (IIV) or recombinant influenza vaccine (RIV) during flu season each year.";
+    }
 
-		// Recommend RIV	
-		List cards = new ArrayList();	
-		cards.add(createImmunizationRecommendation(
-			ind, 
-			"Vaccinations", 
-			"Yearly", 
-			txt, 
-			"http://www.ama-assn.org/go/cpt", 
-			"90673", 
-			"FLU VACC RIV3 NO PRESERV" , 
-			0));
+    // Recommend RIV
+    List cards = new ArrayList();
+    cards.add(createImmunizationRecommendation(
+      ind,
+      "Vaccinations",
+      "Yearly",
+      txt,
+      "http://www.ama-assn.org/go/cpt",
+      "90673",
+      "FLU VACC RIV3 NO PRESERV",
+      0)
+    );
 
-		DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-		resp1.putValue("CARDS", cards);
-		insert(resp1);
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
 end
 
 rule "Only Hives After Egg Exposure"
-	dialect "mvel"
-	enabled true
-	agenda-group "INFLUENZA_VACCINE_RECOMMEND"
-	activation-group "INFLUENZA_RECOMMEND"
-	salience 70
-	when
-		$patient : Patient()
-		$requestContext: CDSRequestContext()
-		$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+  dialect "mvel"
+  enabled true
+  agenda-group "INFLUENZA_VACCINE_RECOMMEND"
+  activation-group "INFLUENZA_RECOMMEND"
+  salience 70
+  when
+    $patient : Patient()
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-		// Answered NO or UNSURE to "In the past year, have you had either the inactivated influenza vaccine (IIV) or recombinant influenza vaccine (RIV)?"
-		$flu21 : String(this in ("2", "3") ) from getAnswerValueString($response, "2.1") 
+    // Answered NO or UNSURE to "In the past year, have you had either the inactivated influenza vaccine (IIV) or recombinant influenza vaccine (RIV)?"
+    $flu21 : String(this in ("2", "3")) from getAnswerValueString($response, "2.1")
 
-		// Answered NO to "Do you exhibit symptoms other than just hives (angioedema, respiratory distress, lightheadedness, ore recurrent emesis, or require epinephrine or some other emergency medical intervention?"
-		Boolean(booleanValue == false) from codedAnswerEquals($response, "1.1.1.1", "http://regenstrief.org/CDS/code/yesno", "1")
+    // Answered NO to "Do you exhibit symptoms other than just hives (angioedema, respiratory distress, lightheadedness, ore recurrent emesis, or require epinephrine or some other emergency medical intervention?"
+    Boolean(booleanValue == false) from codedAnswerEquals($response, "1.1.1.1", "http://regenstrief.org/CDS/code/yesno", "1")
 
-	then
+  then
 
-		// Recommend RIV	
-		List cards = new ArrayList();	
-		cards.add(createImmunizationRecommendation(
-			IndicatorEnum.WARNING.name(), 
-			"Vaccinations", 
-			"Yearly", 
-			"Adults with a history of egg allergy who have hives only after exposure to egg should receive,  each year, either IIV or RIV.", 
-			"http://www.ama-assn.org/go/cpt", 
-			"90673", 
-			"FLU VACC RIV3 NO PRESERV" , 
-			0));
+    // Recommend RIV
+    List cards = new ArrayList();
+    cards.add(createImmunizationRecommendation(
+      IndicatorEnum.WARNING.name(),
+      "Vaccinations",
+      "Yearly",
+      "Adults with a history of egg allergy who have hives only after exposure to egg should receive,  each year, either IIV or RIV.",
+      "http://www.ama-assn.org/go/cpt",
+      "90673",
+      "FLU VACC RIV3 NO PRESERV",
+      0)
+    );
 
-		DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-		resp1.putValue("CARDS", cards);
-		insert(resp1);
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
 
 end
 
 rule "Beyond Hives After Egg Exposure"
-	dialect "mvel"
-	enabled true
-	agenda-group "INFLUENZA_VACCINE_RECOMMEND"
-	activation-group "INFLUENZA_RECOMMEND"
-	salience 60
-	when
-		$patient : Patient()
-		$requestContext: CDSRequestContext()
-		$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+  dialect "mvel"
+  enabled true
+  agenda-group "INFLUENZA_VACCINE_RECOMMEND"
+  activation-group "INFLUENZA_RECOMMEND"
+  salience 60
+  when
+    $patient : Patient()
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-		// Answered NO to "In the past year, have you had either the inactivated influenza vaccine (IIV) or recombinant influenza vaccine (RIV)?"
-		Boolean(booleanValue == false) from codedAnswerEquals($response, "2.1", "http://regenstrief.org/CDS/code/yesno", "1")
+    // Answered NO to "In the past year, have you had either the inactivated influenza vaccine (IIV) or recombinant influenza vaccine (RIV)?"
+    Boolean(booleanValue == false) from codedAnswerEquals($response, "2.1", "http://regenstrief.org/CDS/code/yesno", "1")
 
-		// Answered YES to "Do you exhibit symptoms other than just hives (angioedema, respiratory distress, lightheadedness, ore recurrent emesis, or require epinephrine or some other emergency medical intervention?"
-		Boolean(booleanValue == true) from codedAnswerEquals($response, "1.1.1.1", "http://regenstrief.org/CDS/code/yesno", "1")
+    // Answered YES to "Do you exhibit symptoms other than just hives (angioedema, respiratory distress, lightheadedness, ore recurrent emesis, or require epinephrine or some other emergency medical intervention?"
+    Boolean(booleanValue == true) from codedAnswerEquals($response, "1.1.1.1", "http://regenstrief.org/CDS/code/yesno", "1")
 
-	then
+  then
+    // Recommend RIV
+    List cards = new ArrayList();
+    cards.add(createImmunizationRecommendation(
+      IndicatorEnum.WARNING.name(),
+      "Vaccinations",
+      "Yearly",
+      "Adults with a history of egg allergy with symptoms other than just hives (angioedema, respiratory distress, lightheadedness, ore recurrent emesis, or who has require epinephrine or other emergency medical intervention may receive IIV or RIV *in a setting with supervision by a health care provider*.",
+      "http://www.ama-assn.org/go/cpt",
+      "90673",
+      "FLU VACC RIV3 NO PRESERV",
+      0
+    ));
 
-		// Recommend RIV	
-		List cards = new ArrayList();	
-		cards.add(createImmunizationRecommendation(
-			IndicatorEnum.WARNING.name(), 
-			"Vaccinations", 
-			"Yearly", 
-			"Adults with a history of egg allergy with symptoms other than just hives (angioedema, respiratory distress, lightheadedness, ore recurrent emesis, or who has require epinephrine or other emergency medical intervention may receive IIV or RIV *in a setting with supervision by a health care provider*.", 
-			"http://www.ama-assn.org/go/cpt", 
-			"90673", 
-			"FLU VACC RIV3 NO PRESERV" , 
-			0));
-
-		DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-		resp1.putValue("CARDS", cards);
-		insert(resp1);
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
 
 end
