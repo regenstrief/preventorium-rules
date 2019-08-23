@@ -1,166 +1,167 @@
 rule "LUNG_CANCER_SURVEY"
-   dialect "mvel"
-   enabled true
-   when
-      FhirPatient(ageInYears >= 55 )
-      FhirPatient(ageInYears < 80 )
-   then
-      drools.setFocus("LUNG_CANCER_SURVEY") 
+  dialect "mvel"
+  enabled true
+  when
+    FhirPatient(ageInYears >= 55)
+    FhirPatient(ageInYears < 80)
+  then
+    drools.setFocus("LUNG_CANCER_SURVEY")
 end
 
-
 rule "RULE 1 - LUNG_CANCER_SURVEY NO LDCT In Last Year but exceeds from loinc observation."
-	dialect "mvel"
-	enabled true
-	agenda-group "LUNG_CANCER_SURVEY"
-	activation-group "LUNG_CANCER_SURVEY"
-	salience 500
-	
-when
-	$patient : Patient()
+  dialect "mvel"
+  enabled true
+  agenda-group "LUNG_CANCER_SURVEY"
+  activation-group "LUNG_CANCER_SURVEY"
+  salience 500
 
+  when
+    $patient : Patient()
 
+    // >= 30 pack years and NO LDCT this year.
 
-        // >= 30 pack years and NO LDCT this year.	
+    List(size > 0) from collect(FhirDiagnosticOrder()
+      from getDiagnosticOrders(
+        patientRegistrations,
+        "http://www.ama-assn.org/go/cpt|G0297",
+        getWithinLastDayJoda(365),
+        getWithinLastDayJoda(0)
+      )
+    )
 
-	List(size > 0) from collect(FhirDiagnosticOrder() 
-		from getDiagnosticOrders(
-		patientRegistrations, "http://www.ama-assn.org/go/cpt|G0297", 
-		getWithinLastDayJoda(365), 
-		getWithinLastDayJoda(0)  ))
+  then
+    // DO NOTHING - ENDS THE RULE SET.
 
-then
-        // DO NOTHING - ENDS THE RULE SET.
 end
 
 
 rule "RULE 2 - LUNG_CANCER_SURVEY NO LDCT In Last Year but indications smoking."
-	dialect "mvel"
-	enabled true
-	agenda-group "LUNG_CANCER_SURVEY"
-	activation-group "LUNG_CANCER_SURVEY"
-	salience 400
-	
-when
-	$patient : Patient()
+  dialect "mvel"
+  enabled true
+  agenda-group "LUNG_CANCER_SURVEY"
+  activation-group "LUNG_CANCER_SURVEY"
+  salience 400
 
+  when
+    $patient : Patient()
 
+    // >= 30 pack years and NO LDCT this year.
 
-        // >= 30 pack years and NO LDCT this year.	
+    List(size == 0) from collect(FhirDiagnosticOrder()
+      from getDiagnosticOrders(
+        patientRegistrations,
+        "http://www.ama-assn.org/go/cpt|G0297",
+        getWithinLastDayJoda(365),
+        getWithinLastDayJoda(0)
+      )
+    )
 
-	List(size == 0) from collect(FhirDiagnosticOrder() 
-		from getDiagnosticOrders(
-		patientRegistrations, "http://www.ama-assn.org/go/cpt|G0297", 
-		getWithinLastDayJoda(365), 
-		getWithinLastDayJoda(0)  ))
+    (
+      ArrayList(size > 0) from collect(FhirResultObject() from
+        getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-9", "V15.82"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY"))
+      or
+      ArrayList(size > 0) from collect(FhirResultObject() from
+        getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-10", "Z87.891"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY"))
+    )
 
-	(
-		ArrayList(size > 0) from collect(FhirResultObject() from 
-			getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-9", "V15.82"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY") )  
-		or
-		ArrayList(size > 0) from collect(FhirResultObject() from 
-			getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-10", "Z87.891"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY") ) 
-	)
+  then
+    QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
 
-then
-	QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
+    List secQAnswers = new ArrayList();
 
-		List secQAnswers = new ArrayList();
-		
-		CodingDt ans1 = new CodingDt("http://regenstrief.org/cds/smoking", "less 1");
-		ans1.setDisplay("less than 1 pack per day");
-		secQAnswers.add(ans1);
-		
-		CodingDt ans2 = new CodingDt("http://regenstrief.org/cds/smoking", "1");
-		ans2.setDisplay("1 pack per day");
-		secQAnswers.add(ans2);
-		
-		CodingDt ans3 = new CodingDt("http://regenstrief.org/cds/smoking", "between 1 and 2");
-		ans3.setDisplay("more than 1 pack less than 2 packs per day");
-		secQAnswers.add(ans3);
-		
-		CodingDt ans4 = new CodingDt("http://regenstrief.org/cds/smoking", "2");
-		ans4.setDisplay("2 packs per day");
-		secQAnswers.add(ans4);
-		
-		
-		Group group =  builder
-			.startGroup("lung-1g", "http://regenstrief.org/cds/lung", "PreventionSurvey-LUNG", "Lung Cancer", "Lung Cancer", true) 
-			.addQuestion("lung-1.1.2", "http://regenstrief.org/cds/lung", "LUNG", "For how many years have you smoked or did you smoke?", AnswerFormatEnum.INTEGER)
-			.addQuestion("lung-1.1.1", "http://regenstrief.org/cds/lung", "LUNG", "How many packs a day are you smoking or have you smoked per day?", AnswerFormatEnum.CHOICE, secQAnswers)
-			.endGroup()
-		.getGroup();
+    CodingDt ans1 = new CodingDt("http://regenstrief.org/cds/smoking", "less 1");
+    ans1.setDisplay("less than 1 pack per day");
+    secQAnswers.add(ans1);
 
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("Lung Screen CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
-	resp1.putValue("GROUP", group);
-	insert(resp1);
+    CodingDt ans2 = new CodingDt("http://regenstrief.org/cds/smoking", "1");
+    ans2.setDisplay("1 pack per day");
+    secQAnswers.add(ans2);
+
+    CodingDt ans3 = new CodingDt("http://regenstrief.org/cds/smoking", "between 1 and 2");
+    ans3.setDisplay("more than 1 pack less than 2 packs per day");
+    secQAnswers.add(ans3);
+
+    CodingDt ans4 = new CodingDt("http://regenstrief.org/cds/smoking", "2");
+    ans4.setDisplay("2 packs per day");
+    secQAnswers.add(ans4);
+
+    Group group =  builder
+      .startGroup("lung-1g", "http://regenstrief.org/cds/lung", "PreventionSurvey-LUNG", "Lung Cancer", "Lung Cancer", true)
+      .addQuestion("lung-1.1.2", "http://regenstrief.org/cds/lung", "LUNG", "For how many years have you smoked or did you smoke?", AnswerFormatEnum.INTEGER)
+      .addQuestion("lung-1.1.1", "http://regenstrief.org/cds/lung", "LUNG", "How many packs a day are you smoking or have you smoked per day?", AnswerFormatEnum.CHOICE, secQAnswers)
+      .endGroup()
+    .getGroup();
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("Lung Screen CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
+    resp1.putValue("GROUP", group);
+    insert(resp1);
 end
 
-
 rule "RULE 3 - LUNG_CANCER_SURVEY NO Chest In Last Year and no other indicators of smoking."
-	dialect "mvel"
-	enabled true
-	agenda-group "LUNG_CANCER_SURVEY"
-	activation-group "LUNG_CANCER_SURVEY"
-	salience 300
-	
-when
-	$patient : Patient()
+  dialect "mvel"
+  enabled true
+  agenda-group "LUNG_CANCER_SURVEY"
+  activation-group "LUNG_CANCER_SURVEY"
+  salience 300
 
-        // Enabled when new build
-        // Boolean(booleanValue == false) from smokingYearsExceed(patientRegistrations, 30)
+  when
+    $patient : Patient()
 
+    // Enabled when new build
+    // Boolean(booleanValue == false) from smokingYearsExceed(patientRegistrations, 30)
 
-        // >= 30 pack years and NO LDCT this year.	
+    // >= 30 pack years and NO LDCT this year.
 
-	List(size == 0) from collect(FhirDiagnosticOrder() 
-		from getDiagnosticOrders(
-		patientRegistrations, "http://www.ama-assn.org/go/cpt|G0297", 
-		getWithinLastDayJoda(365), 
-		getWithinLastDayJoda(0)  ))
+    List(size == 0) from collect(FhirDiagnosticOrder()
+      from getDiagnosticOrders(
+        patientRegistrations,
+        "http://www.ama-assn.org/go/cpt|G0297",
+        getWithinLastDayJoda(365),
+        getWithinLastDayJoda(0)
+      )
+    )
 
-		ArrayList(size == 0) from collect(FhirResultObject() from 
-			getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-9", "V15.82"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY") ) 
-		ArrayList(size == 0) from collect(FhirResultObject() from 
-			getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-10", "Z87.891"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY") ) 
-then
-	QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
+    ArrayList(size == 0) from collect(FhirResultObject() from
+      getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-9", "V15.82"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY"))
+    ArrayList(size == 0) from collect(FhirResultObject() from
+      getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-10", "Z87.891"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY"))
+  then
+    QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
 
-		List secQAnswers = new ArrayList();
-		
-		CodingDt ans1 = new CodingDt("http://regenstrief.org/cds/smoking", "less 1");
-		ans1.setDisplay("less than 1 pack per day");
-		secQAnswers.add(ans1);
-		
-		CodingDt ans2 = new CodingDt("http://regenstrief.org/cds/smoking", "1");
-		ans2.setDisplay("1 pack per day");
-		secQAnswers.add(ans2);
-		
-		CodingDt ans3 = new CodingDt("http://regenstrief.org/cds/smoking", "between 1 and 2");
-		ans3.setDisplay("more than 1 pack less than 2 packs per day");
-		secQAnswers.add(ans3);
-		
-		CodingDt ans4 = new CodingDt("http://regenstrief.org/cds/smoking", "2");
-		ans4.setDisplay("2 packs per day");
-		secQAnswers.add(ans4);
-		
-		
-		Group group =  builder
-			.startGroup("lung-1g", "http://regenstrief.org/cds/lung", "PreventionSurvey-LUNG", "Lung Cancer", "Lung Cancer", true) 
-				.startQuestion("lung-1.1", "http://regenstrief.org/cds/lung", "LUNG", "At any time within the past 15 years, have you smoked every day or nearly every day?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
-					.startGroup("lung-1.1g", "http://regenstrief.org/cds/lung", "PreventionSurvey-LUNG", "")
-						.startExtension("http://hl7.org/fhir/StructureDefinition/questionnaire-enableWhen")
-							.addExtension("question", "lung-1.1")
-							.addExtension("answer", "http://regenstrief.org/CDS/code/yesno", "1", "yes")
-						.endExtension()
-						.addQuestion("lung-1.1.2", "http://regenstrief.org/cds/lung", "LUNG", "For how many years have you smoked or did you smoke?", AnswerFormatEnum.INTEGER)
-						.addQuestion("lung-1.1.1", "http://regenstrief.org/cds/lung", "LUNG", "How many packs a day are you smoking or have you smoked per day?", AnswerFormatEnum.CHOICE, secQAnswers)
-					.endGroup()
-				.endQuestion()
-			.endGroup()
-		.getGroup();
+    List secQAnswers = new ArrayList();
 
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("Lung Screen CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
-	resp1.putValue("GROUP", group);
-	insert(resp1);
+    CodingDt ans1 = new CodingDt("http://regenstrief.org/cds/smoking", "less 1");
+    ans1.setDisplay("less than 1 pack per day");
+    secQAnswers.add(ans1);
+
+    CodingDt ans2 = new CodingDt("http://regenstrief.org/cds/smoking", "1");
+    ans2.setDisplay("1 pack per day");
+    secQAnswers.add(ans2);
+
+    CodingDt ans3 = new CodingDt("http://regenstrief.org/cds/smoking", "between 1 and 2");
+    ans3.setDisplay("more than 1 pack less than 2 packs per day");
+    secQAnswers.add(ans3);
+
+    CodingDt ans4 = new CodingDt("http://regenstrief.org/cds/smoking", "2");
+    ans4.setDisplay("2 packs per day");
+    secQAnswers.add(ans4);
+
+    Group group =  builder
+      .startGroup("lung-1g", "http://regenstrief.org/cds/lung", "PreventionSurvey-LUNG", "Lung Cancer", "Lung Cancer", true)
+        .startQuestion("lung-1.1", "http://regenstrief.org/cds/lung", "LUNG", "At any time within the past 15 years, have you smoked every day or nearly every day?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesno"))
+          .startGroup("lung-1.1g", "http://regenstrief.org/cds/lung", "PreventionSurvey-LUNG", "")
+            .startExtension("http://hl7.org/fhir/StructureDefinition/questionnaire-enableWhen")
+              .addExtension("question", "lung-1.1")
+              .addExtension("answer", "http://regenstrief.org/CDS/code/yesno", "1", "yes")
+            .endExtension()
+            .addQuestion("lung-1.1.2", "http://regenstrief.org/cds/lung", "LUNG", "For how many years have you smoked or did you smoke?", AnswerFormatEnum.INTEGER)
+            .addQuestion("lung-1.1.1", "http://regenstrief.org/cds/lung", "LUNG", "How many packs a day are you smoking or have you smoked per day?", AnswerFormatEnum.CHOICE, secQAnswers)
+          .endGroup()
+        .endQuestion()
+      .endGroup()
+    .getGroup();
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("Lung Screen CDS-HOOKS card\n\nPatient Name:  " + $patient.getNameFirstRep().getNameAsSingleString() + " \n\nPatient Age:  " +getAgeInYears($patient.getBirthDate()) + " ","CDS", "SURVEY_QUESTION");
+    resp1.putValue("GROUP", group);
+    insert(resp1);
 end
