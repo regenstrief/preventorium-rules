@@ -1,10 +1,10 @@
 rule "CRC Screen Recommendation"
-   dialect "mvel"
-   enabled true
-   when
-      FhirPatient(ageInYears >= 40 )
-   then
-      drools.setFocus("CRC_SCREENING_RECOMMEND") 
+  dialect "mvel"
+  enabled true
+  when
+    FhirPatient(ageInYears >= 40)
+  then
+    drools.setFocus("CRC_SCREENING_RECOMMEND")
 end
 
 // --------------------------------------------
@@ -17,58 +17,64 @@ end
 // RECOMMEND FIT, FIT-DNA, Colonoscopy
 
 rule "1 - Family History and NO Screen so CRC Screen Recommended"
-	dialect "mvel"
-	enabled true
-	agenda-group "CRC_SCREENING_RECOMMEND"
-        activation-group "CRC_SCREENING_RECOMMEND"
-	salience 80
-	
-when
-	$patient : Patient()
-        FhirPatient(ageInYears < 50 )
-        $requestContext: CDSRequestContext()
-        $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+  dialect "mvel"
+  enabled true
+  agenda-group "CRC_SCREENING_RECOMMEND"
+  activation-group "CRC_SCREENING_RECOMMEND"
+  salience 80
 
-	// Patient does have First Degree Relation (FDR) that had CRC before age 60
-        // Patient does NOT have 2 or more FDR that have CRC at any age
-	// Answered NO to "Do you have any close relatives (Parent, Sibling, Child) that had CRC before age 60 or more than one with CRC?"
- 
+  when
+    $patient : Patient()
 
-	Boolean(booleanValue == false) from codedAnswerEquals($response, "6.1", "http://regenstrief.org/CDS/code/yesno", "1") 
+    FhirPatient(ageInYears < 50)
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-        ArrayList(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, [  
-                                                                                                       "http://snomed.info/sct|425213009",
-                                                                                                       "http://snomed.info/sct|422581008",
-                                                                                                       "http://snomed.info/sct|422375001",
-                                                                                                       "http://snomed.info/sct|422985007"
-                                                                                               ], true) ) or
-	Boolean(booleanValue == true) from codedAnswerEquals($response, "5.1", "http://regenstrief.org/CDS/code/yesno", "1") 
+    // Patient does have First Degree Relation (FDR) that had CRC before age 60
+    // or has 2 or more FDR that have CRC at any age
 
-        ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, "http://loinc.org|57803-9", getWithinLastDayJoda(1095), null, ResultTypeEnum.OBSERVATION, "ANY") ) 
-        ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://loinc.org", "82956-4"), getWithinLastDayJoda(365), null, ResultTypeEnum.OBSERVATION, "ANY") )  
-        ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(1825), null, ResultTypeEnum.PROCEDURE, "ANY"))
+    // Answered YES to "Do you have any close relatives (Parent, Sibling, Child) that had CRC before age 60 or more than one with CRC?"
+    $crc51 : String(this in ("1") ) from getAnswerValueString($response, "5.1") 
 
+    ArrayList(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, [
+      "http://snomed.info/sct|425213009",
+      "http://snomed.info/sct|422581008",
+      "http://snomed.info/sct|422375001",
+      "http://snomed.info/sct|422985007"
+    ], true)) or
+    Boolean(booleanValue == true) from codedAnswerEquals($response, "5.1", "http://regenstrief.org/CDS/code/yesno", "1")
 
-then
-	// Recommend RIV	
-	List cards = new ArrayList();	
-        cards.add(createDiagnosticOrder(
-          	IndicatorEnum.WARNING.name(),
-    	       "Cancer Screening",
-        	"Every 5 years", 
-        	"All adults 50 years old or older than relatives with history of cancer at higher risk should have a colonoscopy every 5 years.", 
-    	        "http://www.ama-assn.org/go/cpt", 
-         	"45378", 
-        	"COLONOSCOPY EVERY 5 YEARS"
-                )
-         );
-	  
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-	resp1.putValue("CARDS", cards);
-	insert(resp1);
-	
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, "http://loinc.org|57803-9", getWithinLastDayJoda(1095), null, ResultTypeEnum.OBSERVATION, "ANY"))
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://loinc.org", "82956-4"), getWithinLastDayJoda(365), null, ResultTypeEnum.OBSERVATION, "ANY"))
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(1825), null, ResultTypeEnum.PROCEDURE, "ANY"))
+
+  then
+    // Recommend RIV
+    List cards = new ArrayList();
+
+    String ind = IndicatorEnum.INFO.name();
+
+    String txt = "Check with your doctor. All adults 50 years old or older than relatives with history of cancer at higher risk should have a colonoscopy every 5 years.";
+
+    if ( "2".equals($crc51) ) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults 50 years old or older than relatives with history of cancer at higher risk should have a colonoscopy every 5 years.";
+    }
+
+    cards.add(createDiagnosticOrder(
+      ind,
+      "Cancer Screening",
+      "Every 5 years",
+      txt,
+      "http://www.ama-assn.org/go/cpt",
+       "45378",
+      "COLONOSCOPY EVERY 5 YEARS"
+    ));
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
 end
-
 
 // --------------------------------------------
 // RULE 2
@@ -80,57 +86,61 @@ end
 // Colonoscopy every 5 years
 
 rule "2 - History Recent CRC Screen every 5 Recommend"
-	dialect "mvel"
-	enabled true
-	agenda-group "CRC_SCREENING_RECOMMEND"
-        activation-group "CRC_SCREENING_RECOMMEND"
-	salience 70
-when
+  dialect "mvel"
+  enabled true
+  agenda-group "CRC_SCREENING_RECOMMEND"
+  activation-group "CRC_SCREENING_RECOMMEND"
+  salience 70
 
-	$patient : Patient()
-        FhirPatient(ageInYears >= 50 )
-        $requestContext: CDSRequestContext()
-        $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
-	
-	// No History of past FIT, FIT-DNA, or Colonoscopy
-	// Answered NO to "Have you had a FIT in the past year or FIT-DNA (Colon Guard) in the past 3 years or a Colonoscopy in the past 10 years?"
+  when
+    $patient : Patient()
 
- 	Boolean(booleanValue == false) from codedAnswerEquals($response, "6.1", "http://regenstrief.org/CDS/code/yesno", "1")  
+    FhirPatient(ageInYears >= 50)
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-     	ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(1780), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
+    // No History of past FIT, FIT-DNA, or Colonoscopy
+    // Answered NO or UNSURE to "Have you had a FIT in the past year or FIT-DNA (Colon Guard) in the past 3 years or a Colonoscopy in the past 10 years?"
+    $crc61 : String(this in ("2", "3") ) from getAnswerValueString($response, "6.1") 
 
-        ArrayList(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, [  
-                                                                                                       "http://snomed.info/sct|425213009",
-                                                                                                       "http://snomed.info/sct|422581008",
-                                                                                                       "http://snomed.info/sct|422375001",
-                                                                                                       "http://snomed.info/sct|422985007"
-                                                                                               ], true) ) or
-	Boolean(booleanValue == true) from codedAnswerEquals($response, "5.1", "http://regenstrief.org/CDS/code/yesno", "1") 
- 
-then
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(1780), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
 
-	// Recommend RIV	
-	List cards = new ArrayList();	
-        cards.add(createDiagnosticOrder(
-          	IndicatorEnum.WARNING.name(),
-    	       "Cancer Screening",
-        	"Every 5 years", 
-        	"All adults 50 years old or older than relatives with history of cancer at higher risk should have a colonoscopy every 5 years.", 
-    	        "http://www.ama-assn.org/go/cpt", 
-         	"45378", 
-        	"COLONOSCOPY EVERY 5 YEARS"
-                )
-         );
-	  
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-	resp1.putValue("CARDS", cards);
-	insert(resp1);
+    ArrayList(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, [
+      "http://snomed.info/sct|425213009",
+      "http://snomed.info/sct|422581008",
+      "http://snomed.info/sct|422375001",
+      "http://snomed.info/sct|422985007"
+    ], true)) or
+    // Answered YES to "Do you have any close relatives (Parent, Sibling, Child) that had CRC before age 60 or more than one with CRC?"
+    String(this in ("1") ) from getAnswerValueString($response, "5.1") 
 
+  then
+    // Recommend RIV
+    List cards = new ArrayList();
+
+    String ind = IndicatorEnum.INFO.name();
+
+    String txt = "Check with your doctor. All adults 50 years old or older than relatives with history of cancer at higher risk should have a colonoscopy every 5 years.";
+
+    if ( "2".equals($crc61) ) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults 50 years old or older than relatives with history of cancer at higher risk should have a colonoscopy every 5 years.";
+    }
+
+    cards.add(createDiagnosticOrder(
+      ind,
+      "Cancer Screening",
+      "Every 5 years",
+      txt,
+      "http://www.ama-assn.org/go/cpt",
+       "45378",
+      "COLONOSCOPY EVERY 5 YEARS"
+    ));
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
 end
-
-
-
-
 
 // --------------------------------------------
 // RULE 3
@@ -142,54 +152,64 @@ end
 // RECOMMEND FIT, FIT-DNA, Colonoscopy
 
 rule "3 - Over Fifty No Family History and NO Screen so CRC Screen Recommended"
-	dialect "mvel"
-	enabled true
-	agenda-group "CRC_SCREENING_RECOMMEND"
-        activation-group "CRC_SCREENING_RECOMMEND"
-	salience 100
-	
-when
-	$patient : Patient()
-        FhirPatient(ageInYears >= 50 )
-        $requestContext: CDSRequestContext()
-        $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
-	
-	// Patient does NOT have First Degree Relation (FDR) that had CRC before age 60
-        // Patient does NOT have 2 or more FDR that have CRC at any age
-	// Answered NO to "Do you have any close relatives (Parent, Sibling, Child) that had CRC before age 60 or more than one with CRC?"
+  dialect "mvel"
+  enabled true
+  agenda-group "CRC_SCREENING_RECOMMEND"
+  activation-group "CRC_SCREENING_RECOMMEND"
+  salience 100
 
-             Boolean(booleanValue == false) from codedAnswerEquals($response, "6.1", "http://regenstrief.org/CDS/code/yesno", "1") 
+  when
+    $patient : Patient()
 
-	     ArrayList(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, [  
-                                                                                                       "http://snomed.info/sct|425213009",
-                                                                                                       "http://snomed.info/sct|422581008",
-                                                                                                       "http://snomed.info/sct|422375001",
-                                                                                                       "http://snomed.info/sct|422985007"
-                                                                                               ], true) ) and
-	     Boolean(booleanValue == false) from codedAnswerEquals($response, "5.1", "http://regenstrief.org/CDS/code/yesno", "1") 
+    FhirPatient(ageInYears >= 50)
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
- 
-	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, "http://loinc.org|57803-9", getWithinLastDayJoda(365), null, ResultTypeEnum.OBSERVATION, "ANY") ) 
-	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://loinc.org", "82956-4"), getWithinLastDayJoda(1095), null, ResultTypeEnum.OBSERVATION, "ANY") )  
-	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(3650), null, ResultTypeEnum.PROCEDURE, "ANY") )  
-	     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "45378"), getWithinLastDayJoda(3650), null, ResultTypeEnum.PROCEDURE, "ANY") )  
+    // Answered NO or UNSURE to "Do you have any close relatives (Parent, Sibling, Child) that had CRC before age 60 or more than one with CRC?"
+    $crc51 : String(this in ("2", "3") ) from getAnswerValueString($response, "5.1") 
 
-then
+    // Patient does NOT have First Degree Relation (FDR) that had CRC before age 60
+    // Patient does NOT have 2 or more FDR that have CRC at any age
+    ArrayList(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, [
+      "http://snomed.info/sct|425213009",
+      "http://snomed.info/sct|422581008",
+      "http://snomed.info/sct|422375001",
+      "http://snomed.info/sct|422985007"
+    ], true))
 
-	// Recommend RIV	
-	List cards = new ArrayList();	
-    	cards.add(createDiagnosticOrder(
-    		IndicatorEnum.WARNING.name(), 
-    		"Cancer Screening", 
-    		"FIT Yearly, FIT-DNA every 3 years, Colonoscopy every 10 years", 
-    		"All adults > 50 years old should have a FIT every year, FIT-DNA every 3 years, or Colonoscopy every 10 years", 
-    		"http://loinc.org", 
-    		"82956-4", 
-    		"FIT ANNUALLY, FIT-DNA 3 YEARS, or COLONOSCOPY EVERY 10 YEARS"));
-    			  
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-	resp1.putValue("CARDS", cards);
-	insert(resp1);
+    // Answered NO or UNSURE to "Have you had a FIT in the past year or FIT-DNA (Colon Guard) in the past 3 years or a Colonoscopy in the past 10 years?"
+    $crc61 : String(this in ("2", "3") ) from getAnswerValueString($response, "6.1") 
 
-	
+    // No History of past FIT, FIT-DNA, or Colonoscopy
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, "http://loinc.org|57803-9", getWithinLastDayJoda(365), null, ResultTypeEnum.OBSERVATION, "ANY"))
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://loinc.org", "82956-4"), getWithinLastDayJoda(1095), null, ResultTypeEnum.OBSERVATION, "ANY"))
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(3650), null, ResultTypeEnum.PROCEDURE, "ANY"))
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "45378"), getWithinLastDayJoda(3650), null, ResultTypeEnum.PROCEDURE, "ANY"))
+
+  then
+    // Recommend RIV
+    List cards = new ArrayList();
+
+    String ind = IndicatorEnum.INFO.name();
+
+    txt = "Check with your doctor. All adults > 50 years old should have a FIT every year, FIT-DNA every 3 years, or Colonoscopy every 10 years";
+
+    if ( "2".equals($crc61) ) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults >50 years old should have a FIT every year, FIT-DNA every 3 years, or Colonoscopy every 10 years";
+    }
+
+    cards.add(createDiagnosticOrder(
+      ind,
+      "Cancer Screening",
+      "FIT Yearly, FIT-DNA every 3 years, Colonoscopy every 10 years",
+      txt,
+      "http://loinc.org",
+      "82956-4",
+      "FIT ANNUALLY, FIT-DNA 3 YEARS, or COLONOSCOPY EVERY 10 YEARS"
+    ));
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
 end
