@@ -18,6 +18,7 @@ rule "TDAP In Last 10 Years"
 	
     // Tdap Given: CPT-4 Code: 90715  (CVX Code: 115)
     // Td Given:     CPT-4 Code: 90714  (CVX Code: 113)
+    // Td (adult) preservative free: SNOMED 170333009
     // Did not recieve Recieved TD OR TDAP in past 10 years?
     List(size == 0) from collect(FhirResultObject() 
       from getResult(
@@ -30,7 +31,15 @@ rule "TDAP In Last 10 Years"
     List(size == 0) from collect(FhirResultObject() 
       from getResult(
       patientRegistrations, "http://hl7.org/fhir/sid/cvx|113", 
-      getWithinLastDayJoda(365), 
+      getWithinLastDayJoda(3650), 
+      getWithinLastDayJoda(0),  
+      ResultTypeEnum.IMMUNIZATION, 
+      "ANY"))
+
+    List(size == 0) from collect(FhirResultObject() 
+      from getResult(
+      patientRegistrations, "http://snomed.info/sct|170333009", 
+      getWithinLastDayJoda(3650), 
       getWithinLastDayJoda(0),  
       ResultTypeEnum.IMMUNIZATION, 
       "ANY"))

@@ -411,8 +411,10 @@ rule "PNEUMONIA SURVEY RULE 3 NO_COND 65 OR OVER"
     // NO VACCINE IN PAST
     // PVC13
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
     // PPSV23
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|571631000119106", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
 
   then
     QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
@@ -514,8 +516,10 @@ rule "PNEUMONIA SURVEY RULE 4 Immunocompromised 65 OR OVER"
     // NO VACCINE IN PAST
     // PVC13
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
     // PPSV23
-    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|571631000119106", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
 
   then
     QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
@@ -556,8 +560,10 @@ rule "PNEUMONIA SURVEY RULE 5 High Risk 65 OR OVER"
     // NO VACCINE IN PAST
     // PVC13
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
     // PPSV23
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|571631000119106", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
 
   then
     QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
@@ -608,8 +614,10 @@ rule "PNEUMONIA SURVEY RULE 6 No Cond 19 to 64"
     // NO VACCINE IN PAST
     // PVC13
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
     // PPSV23
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|571631000119106", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
 
   then
     QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
@@ -689,8 +697,10 @@ rule "PNEUMONIA SURVEY RULE 7 High Risk 19 to 64"
     // NO VACCINE IN PAST
     // PVC13
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
     // PPSV23
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|571631000119106", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
 
   then
 
@@ -724,8 +734,10 @@ rule "PNEUMONIA SURVEY RULE 8 Immuno 19 to 64"
     // NO VACCINE IN PAST
     // PVC13
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
     // PPSV23
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|571631000119106", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
 
   then
     QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();

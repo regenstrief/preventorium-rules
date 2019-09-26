@@ -18,8 +18,7 @@ rule "RULE 1 - LUNG_CANCER_SURVEY NO LDCT In Last Year but exceeds from loinc ob
   when
     $patient : Patient()
 
-    // >= 30 pack years and NO LDCT this year.
-
+    // LDCT within past year
     List(size > 0) from collect(FhirDiagnosticOrder()
       from getDiagnosticOrders(
         patientRegistrations,
@@ -45,8 +44,7 @@ rule "RULE 2 - LUNG_CANCER_SURVEY NO LDCT In Last Year but indications smoking."
   when
     $patient : Patient()
 
-    // >= 30 pack years and NO LDCT this year.
-
+    // NO LDCT this year.
     List(size == 0) from collect(FhirDiagnosticOrder()
       from getDiagnosticOrders(
         patientRegistrations,
@@ -56,12 +54,16 @@ rule "RULE 2 - LUNG_CANCER_SURVEY NO LDCT In Last Year but indications smoking."
       )
     )
 
+    // Some history of smoking
     (
       ArrayList(size > 0) from collect(FhirResultObject() from
         getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-9", "V15.82"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY"))
       or
       ArrayList(size > 0) from collect(FhirResultObject() from
         getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-10", "Z87.891"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY"))
+      or
+      ArrayList(size > 0) from collect(FhirResultObject() from
+        getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "8517006"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY"))
     )
 
   then
@@ -110,8 +112,7 @@ rule "RULE 3 - LUNG_CANCER_SURVEY NO Chest In Last Year and no other indicators 
     // Enabled when new build
     // Boolean(booleanValue == false) from smokingYearsExceed(patientRegistrations, 30)
 
-    // >= 30 pack years and NO LDCT this year.
-
+    // NO LDCT in past year
     List(size == 0) from collect(FhirDiagnosticOrder()
       from getDiagnosticOrders(
         patientRegistrations,
@@ -121,10 +122,13 @@ rule "RULE 3 - LUNG_CANCER_SURVEY NO Chest In Last Year and no other indicators 
       )
     )
 
+    // No history of smoking
     ArrayList(size == 0) from collect(FhirResultObject() from
       getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-9", "V15.82"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY"))
     ArrayList(size == 0) from collect(FhirResultObject() from
       getResult(patientRegistrations, buildKeyFromConcept( "http://hl7.org/fhir/sid/icd-10", "Z87.891"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY"))
+    ArrayList(size == 0) from collect(FhirResultObject() from
+        getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "8517006"), getWithinLastDayJoda(5475), getWithinLastDayJoda(0), ResultTypeEnum.CONDITION, "ANY"))
   then
     QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
 

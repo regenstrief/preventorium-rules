@@ -20,7 +20,7 @@ rule "BREAST CANCER Rule 1 - No Family History BREAST CANCER "
       FhirPatient(ageInYears >= 40)
       FhirPatient(ageInYears < 50)
 
-      // Patient does NOT have First Degree Relation (FDR) that had CRC before age 60
+      // Patient does NOT have First Degree Relation (FDR) that had breast cancer
       (
       List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|174.9", true)) and
       List(size == 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, "http://hl7.org/fhir/sid/icd-9-cm|175.9", true)) and
@@ -44,11 +44,11 @@ rule "BREAST CANCER Rule 1 - No Family History BREAST CANCER "
       List(size == 0) from collect(FhirResultObject() from getResult( patientRegistrations, "http://snomed.info/sct|254837009", ResultTypeEnum.CONDITION, "ANY"))
       )
 
-
-      // No History of past FIT, FIT-DNA, or Colonoscopy
+      // No History of mammogram in past 2 years
       ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76090"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
       ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76091"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
       ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76092"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
+      ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "24623002"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
 
   then
 

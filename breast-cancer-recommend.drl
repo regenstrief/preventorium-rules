@@ -76,6 +76,7 @@ rule "BREAST CANCER Rule 1 R - Condition or Family History BREAST CANCER"
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76090"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76091"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76092"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
+    List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "24623002"),      getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
 
   then
 
@@ -144,6 +145,7 @@ rule "BREAST CANCER Rule 2 R - Condition or Family History BREAST CANCER"
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76090"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76091"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76092"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
+    List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "24623002"),      getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
 
   then
 
@@ -181,6 +183,7 @@ rule "BREAST CANCER Rule 3 R - Between 50 and 75"
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76090"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76091"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76092"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
+    List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "24623002"),      getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
 
   then
 
@@ -217,6 +220,7 @@ rule "BREAST CANCER Rule 3 R - Over 75"
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76090"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76091"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76092"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
+    List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "24623002"),      getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
 
   then
 

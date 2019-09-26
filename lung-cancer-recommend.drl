@@ -26,6 +26,7 @@ rule "1 LUNG RECOMMEND CT SCAN"
       FhirPatient(ageInYears >= 55 )
       FhirPatient(ageInYears < 80 )
 
+    // LDCT within last year
     List(size > 0) from collect(FhirDiagnosticOrder()
       from getDiagnosticOrders(
         patientRegistrations,
