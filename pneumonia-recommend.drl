@@ -1,469 +1,461 @@
 rule "PNEUMONIA Recommendation"
-   dialect "mvel"
-   enabled true
-   when
-      FhirPatient(ageInYears > 19 )
-   then
-      drools.setFocus("PNEUMONIA_RECOMMENDATION") ;
+  dialect "mvel"
+  enabled true
+  when
+    FhirPatient(ageInYears > 19 )
+  then
+    drools.setFocus("PNEUMONIA_RECOMMENDATION") ;
 end
-
-
 
 rule "PNEUMONIA RECOMMENDATION RULE 1a IMMUNOCOMPROMISING_CRITERIA"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 1000
-	
-when
-	$patient : Patient()
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 1000
 
-// IMMUNE ISSUES
-// Immunocompromising Conditions
-	// Congenital or acquired immunodeficiency including
+  when
+    $patient : Patient()
 
-	// SURVEY RESPONSES
-	$requestContext: CDSRequestContext()
-	$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
-	
-	// DID NOT ANSWER YES to "Do you have any of these immunocompromising conditions for pneumonia conditions ...?"
-	Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-IMMU", "http://regenstrief.org/CDS/code/yesno", "1")
+    // IMMUNE ISSUES
+    // Immunocompromising Conditions
+    // Congenital or acquired immunodeficiency including
 
-		List( size == 0 ) from collect( FhirResultObject() from getResult( patientRegistrations, 
-		[ "http://hl7.org/fhir/sid/icd-9-cm|279",
-			//  Disorders involving the immune mechanism
-			//  Deficiency of humoral immunity
-			"http://hl7.org/fhir/sid/icd-9-cm|279.0",
-			//  Deficiency of cell-mediated immunity
-			"http://hl7.org/fhir/sid/icd-9-cm|279.1",
-			//  Combined immunity deficiency
-			"http://hl7.org/fhir/sid/icd-9-cm|279.2",
-			//  Other specified disorders involving the immune mechanism
-			"http://hl7.org/fhir/sid/icd-9-cm|279.8",
-			//  Unspecified disorder of immune mechanism
-			"http://hl7.org/fhir/sid/icd-9-cm|279.9",
-			//  Immunodeficiency unspecified
-			"http://hl7.org/fhir/sid/icd-10|D84.9",
-			//  Immunodeficiency with predominantly antibody defects
-			"http://hl7.org/fhir/sid/icd-10|D80",
-			//  Combined immunodeficiencies
-			"http://hl7.org/fhir/sid/icd-10|D81",
-			//  Human immunodeficiency virus infection (disorder)
-			"http://snomed.info/sct|86406008",
-		// B- or T-lymphocyte deficiency
-			//  Other specified disorders involving the immune mechanism
-			// DUPLICATED ABOVE
-			// "http://hl7.org/fhir/sid/icd-9-cm|279.8",
-			//  Other disorders of white blood cells
-			"http://hl7.org/fhir/sid/icd-10|D72",
-			//  Other specified disorders of white blood cells
-			"http://hl7.org/fhir/sid/icd-10|D72.8",
-			//  Lymphocytopenia
-			"http://hl7.org/fhir/sid/icd-10|D72.810",
-			//  Other specified disorders of white blood cells
-			"http://hl7.org/fhir/sid/icd-10|D72.89",
-			//  Disorder of white blood cells unspecified
-			"http://hl7.org/fhir/sid/icd-10|D72.9",
-			//   Cellular immune defect (finding)
-			"http://snomed.info/sct|398293003",
-		// Complement deficiencies
-			//  Other specified disorders involving the immune mechanism
-			// DUPLICATED ABOVE
-			// "http://hl7.org/fhir/sid/icd-9-cm|279.8",
-			//  Complement deficiency
-			"http://hl7.org/fhir/sid/icd-10|D84.1",
-			//  Complement deficiency disease (disorder)
-			"http://snomed.info/sct|24743004",
-		// Phagocytic disorders (excluding chronic granulomatous disease)
-			//  Unspecified diseases of blood and blood-forming organs
-			"http://hl7.org/fhir/sid/icd-9-cm|289.9",
-			//  Functional disorders of polymorphonuclear neutrophils
-			"http://hl7.org/fhir/sid/icd-10|D71",
-			//   Immunodeficiency disorder (disorder)
-			"http://snomed.info/sct|234532001",
-		// HIV infection
-			//  Human immunodeficiency virus HIV disease
-			"http://hl7.org/fhir/sid/icd-9-cm|042",
-			//  human immunodeficiency virus HIV disease
-			"http://hl7.org/fhir/sid/icd-10|B20",
-			//  Human immunodeficiency virus positive (finding)
-			"http://snomed.info/sct|165816005",
-		// Chronic renal failure and nephrotic syndrome
-			//  Chronic kidney disease unspecified
-			"http://hl7.org/fhir/sid/icd-9-cm|585.9",
-			//  Chronic kidney disease unspecified
-			"http://hl7.org/fhir/sid/icd-10|N18.9",
-			//   Chronic kidney disease stage 5 (disorder)
-			"http://snomed.info/sct|433146000",
-		// Leukemia
-			//  Unspecified leukemia
-			"http://hl7.org/fhir/sid/icd-9-cm|208.9",
-			//  Lymphoid leukemia
-			"http://hl7.org/fhir/sid/icd-10|C91",
-			//  Myeloid leukemia
-			"http://hl7.org/fhir/sid/icd-10|C92",
-			//  Monocytic leukemia
-			"http://hl7.org/fhir/sid/icd-10|C93",
-			//  Other leukemias of specified cell type
-			"http://hl7.org/fhir/sid/icd-10|C94",
-			//  Leukemia of unspecified cell type
-			"http://hl7.org/fhir/sid/icd-10|C95",
-			//  Chronic myeloid leukemia disease (disorder)
-			"http://snomed.info/sct|92818009",
-		// lymphoma
-			//  Other malignant lymphomas unspecified site extranodal and solid organ sites
-			"http://hl7.org/fhir/sid/icd-9-cm|202.80",
-			//  Follicular lymphoma
-			"http://hl7.org/fhir/sid/icd-10|C82",
-			//  Non-follicular lymphoma
-			"http://hl7.org/fhir/sid/icd-10|C83",
-			//  Mature T/NK-cell lymphomas
-			"http://hl7.org/fhir/sid/icd-10|C84",
-			//  Oth5er specified and unspecified types of non-Hodgkin lymphoma
-			"http://hl7.org/fhir/sid/icd-10|C85",
-			//  Other specified types of T/NK-cell lymphoma
-			"http://hl7.org/fhir/sid/icd-10|C86",
-			//  Malignant immunoproliferative diseases and certain other B-cell lymphomas
-			"http://hl7.org/fhir/sid/icd-10|C88",
-			//  Non-Hodgkins lymphoma (disorder)
-			"http://snomed.info/sct|118601006",
-		// Hodgkin disease
-			//  Hodgkins disease unspecified type
-			"http://hl7.org/fhir/sid/icd-9-cm|201.9",
-			//  Hodgkin lymphoma
-			"http://hl7.org/fhir/sid/icd-10|C81",
-			//  Hodgkins disease mixed cellularity (disorder)
-			"http://snomed.info/sct|118609008",
-		// generalized malignancy
-			//  Disseminated malignant neoplasm without specification of site
-			"http://hl7.org/fhir/sid/icd-9-cm|199.0",
-			//   Other and unspecified malignant neoplasms of lymphoid hematopoietic and related tissue
-			"http://hl7.org/fhir/sid/icd-10|C96",
-			//   Widespread metastatic malignant neoplastic disease (disorder)
-			"http://snomed.info/sct|405843009",
-		// multiple myeloma
-			//  Multiple myeloma
-			"http://hl7.org/fhir/sid/icd-9-cm|203.0",
-			//  Multiple myeloma and malignant plasma cell neoplasms
-			"http://hl7.org/fhir/sid/icd-10|C90",
-			//   Multiple myeloma (disorder)
-			"http://snomed.info/sct|109989006",
-		// Solid organ transplant
-			//  Organ or tissue replaced by transplant
-			"http://hl7.org/fhir/sid/icd-9-cm|V42",
-			//  Kidney replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.0",
-			//  Heart replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.1",
-			//  Heart valve replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.2",
-			//  Skin replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.3",
-			//  Bone replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.4",
-			//  Cornea replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.5",
-			//  Lung replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.6",
-			//  Liver replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.7",
-			//  Other specified organ or tissue replaced by transplant
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.8",
-			//  Bone marrow replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.81",
-			//  Peripheral stem cells replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.82",
-			//  Pancreas replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.83",
-			//  Organ or tissue replaced by transplant intestines 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.84",
-			//  Other specified organ or tissue replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.89",
-			//  Unspecified organ or tissue replaced by transplant 
-			"http://hl7.org/fhir/sid/icd-9-cm|V42.9",
-			//  Transplanted organ and tissue status
-			"http://hl7.org/fhir/sid/icd-10|Z94",
-			//  Kidney transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.0",
-			//  Heart transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.1",
-			//  Lung transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.2",
-			//  Heart and lungs transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.3",
-			//  Liver transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.4",
-			//  Skin transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.5",
-			//  Bone transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.6",
-			//  Corneal transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.7",
-			//  Other transplanted organ and tissue status
-			"http://hl7.org/fhir/sid/icd-10|Z94.8",
-			//  Bone marrow transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.81",
-			//  Intestine transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.82",
-			//  Pancreas transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.83",
-			//  Stem cells transplant status
-			"http://hl7.org/fhir/sid/icd-10|Z94.84",
-			//  Other transplanted organ and tissue status
-			"http://hl7.org/fhir/sid/icd-10|Z94.89",
-			//  Transplanted organ and tissue status unspecified
-			"http://hl7.org/fhir/sid/icd-10|Z94.9"], null, null, ResultTypeEnum.CONDITION, "ANY") );
-		
-		//   Solid organ transplant (procedure)
-		List( size == 0 ) from collect( FhirResultObject() from getResult( patientRegistrations, 
-		[ "http://snomed.info/sct|313039003",
-			//   Cadaveric renal transplant (procedure)
-			"http://snomed.info/sct|175902000",
-			//   Donor renal transplantation (procedure)
-			"http://snomed.info/sct|313030004",
-			//   Transplant of kidney (procedure)
-			"http://snomed.info/sct|70536003",
-			//  Transplantation of heart (procedure)
-			"http://snomed.info/sct|32413006",
-			//   Transplantation of liver (procedure)
-			"http://snomed.info/sct|18027006",
-			//   Transplantation of pancreas (procedure)
-			"http://snomed.info/sct|62438007",
-			//  Transplantation of spleen (procedure)
-			"http://snomed.info/sct|61535006"], null, null, ResultTypeEnum.PROCEDURE, "ANY") );
-			
-	// Latrogenic immunosuppression including long-term systemic corticosteroid and radiation therapy.
-		//  Personal history of immunosuppressive therapy
-		List( size == 0 ) from collect( FhirResultObject() from getResult( patientRegistrations, 
-		[ "http://hl7.org/fhir/sid/icd-9-cm|V87.46",
-			//  Personal history of systemic steroid therapy
-			"http://hl7.org/fhir/sid/icd-9-cm|V87.45",
-			//  Personal history of immunosupression therapy
-			"http://hl7.org/fhir/sid/icd-10|Z92.25",
-			//  Personal history of systemic steroid therapy
-			"http://hl7.org/fhir/sid/icd-10|Z92.241",
-			//  Long term systemic steroid user (finding)
-			"http://snomed.info/sct|12240661000119103"], null, null, ResultTypeEnum.CONDITION, "ANY") );
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-		//   Radiation therapy procedure or service (procedure)
-		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|53438000", null, null, ResultTypeEnum.PROCEDURE, "ANY") )
-			
-	// Anatomical or functional asplenia including
-		//  asplenia
-		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations,
-		[ "http://hl7.org/fhir/sid/icd-9-cm|759.0",
-			//  Acquired absence of spleen
-			"http://hl7.org/fhir/sid/icd-10|Z90.81",
-			//  Disorder of spleen (disorder)
-			"http://snomed.info/sct|51244008",
-		// Sickle cell disease or other hemoglobinopathies
-			//  Sickle-cell disease unspecified
-			"http://hl7.org/fhir/sid/icd-9-cm|282.60",
-			//  Sickle-cell disorders
-			"http://hl7.org/fhir/sid/icd-10|D57",
-			//  Sickle cell trait (disorder)
-			"http://snomed.info/sct|16402000",
-		// Congenital or acquired asplenia
-			//  Other acquired absence of organ
-			"http://hl7.org/fhir/sid/icd-9-cm|V45.79",
-			//  Acquired absence of spleen
-			// DUPLICATED ABOVE
-			// "http://hl7.org/fhir/sid/icd-10|Z90.81",
-			//  Asplenia (congenital)
-			"http://hl7.org/fhir/sid/icd-10|Q89.01",
-			//  Asplenia (disorder)
-			"http://snomed.info/sct|707147002",
-			//  Asplenia following surgical procedure (disorder)
-			"http://snomed.info/sct|724639003",
-			//  Congenital absence of spleen (disorder)
-			"http://snomed.info/sct|93030006",
-		// Splenic dysfunction
-			//  Disease of spleen unspecified
-			"http://hl7.org/fhir/sid/icd-9-cm|289.50",
-			//  Disease of spleen unspecified
-			"http://hl7.org/fhir/sid/icd-10|D73.9"], null, null, ResultTypeEnum.CONDITION, "ANY") );
-			
-		// BELOW COMMENTED OUT BECAUSE ALREADY SPECIFIED ABOVE
-			//  Disorder of spleen (disorder)
-			// DUPLICATED ABOVE
-			// "http://snomed.info/sct|51244008"), null, null, ResultTypeEnum.CONDITION, "ANY") )
-		// Splenectomy
-			//  : Other acquired absence of organ
-			// DUPLICATED ABOVE
-			// "http://hl7.org/fhir/sid/icd-9-cm|V45.79"), null, null, ResultTypeEnum.CONDITION, "ANY") )
-			//  Acquired absence of spleen
-			// DUPLICATED ABOVE
-			// "http://hl7.org/fhir/sid/icd-10|Z90.81"
-			
-			
-		//  Splenectomy (procedure)		
-		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|234319005", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
+    // DID NOT ANSWER YES to "Do you have any of these immunocompromising conditions for pneumonia conditions ...?"
+    Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-IMMU", "http://regenstrief.org/CDS/code/yesnounsure", "1")
 
-then
-       insert ( new String ( "PVAC_NOT_IMMUNO" ) );
+    List( size == 0 ) from collect( FhirResultObject() from getResult( patientRegistrations,
+    [ "http://hl7.org/fhir/sid/icd-9-cm|279",
+      //  Disorders involving the immune mechanism
+      //  Deficiency of humoral immunity
+      "http://hl7.org/fhir/sid/icd-9-cm|279.0",
+      //  Deficiency of cell-mediated immunity
+      "http://hl7.org/fhir/sid/icd-9-cm|279.1",
+      //  Combined immunity deficiency
+      "http://hl7.org/fhir/sid/icd-9-cm|279.2",
+      //  Other specified disorders involving the immune mechanism
+      "http://hl7.org/fhir/sid/icd-9-cm|279.8",
+      //  Unspecified disorder of immune mechanism
+      "http://hl7.org/fhir/sid/icd-9-cm|279.9",
+      //  Immunodeficiency unspecified
+      "http://hl7.org/fhir/sid/icd-10|D84.9",
+      //  Immunodeficiency with predominantly antibody defects
+      "http://hl7.org/fhir/sid/icd-10|D80",
+      //  Combined immunodeficiencies
+      "http://hl7.org/fhir/sid/icd-10|D81",
+      //  Human immunodeficiency virus infection (disorder)
+      "http://snomed.info/sct|86406008",
+      // B- or T-lymphocyte deficiency
+      //  Other specified disorders involving the immune mechanism
+      // DUPLICATED ABOVE
+      // "http://hl7.org/fhir/sid/icd-9-cm|279.8",
+      //  Other disorders of white blood cells
+      "http://hl7.org/fhir/sid/icd-10|D72",
+      //  Other specified disorders of white blood cells
+      "http://hl7.org/fhir/sid/icd-10|D72.8",
+      //  Lymphocytopenia
+      "http://hl7.org/fhir/sid/icd-10|D72.810",
+      //  Other specified disorders of white blood cells
+      "http://hl7.org/fhir/sid/icd-10|D72.89",
+      //  Disorder of white blood cells unspecified
+      "http://hl7.org/fhir/sid/icd-10|D72.9",
+      //   Cellular immune defect (finding)
+      "http://snomed.info/sct|398293003",
+      // Complement deficiencies
+      //  Other specified disorders involving the immune mechanism
+      // DUPLICATED ABOVE
+      // "http://hl7.org/fhir/sid/icd-9-cm|279.8",
+      //  Complement deficiency
+      "http://hl7.org/fhir/sid/icd-10|D84.1",
+      //  Complement deficiency disease (disorder)
+      "http://snomed.info/sct|24743004",
+      // Phagocytic disorders (excluding chronic granulomatous disease)
+      //  Unspecified diseases of blood and blood-forming organs
+      "http://hl7.org/fhir/sid/icd-9-cm|289.9",
+      //  Functional disorders of polymorphonuclear neutrophils
+      "http://hl7.org/fhir/sid/icd-10|D71",
+      //   Immunodeficiency disorder (disorder)
+      "http://snomed.info/sct|234532001",
+      // HIV infection
+      //  Human immunodeficiency virus HIV disease
+      "http://hl7.org/fhir/sid/icd-9-cm|042",
+      //  human immunodeficiency virus HIV disease
+      "http://hl7.org/fhir/sid/icd-10|B20",
+      //  Human immunodeficiency virus positive (finding)
+      "http://snomed.info/sct|165816005",
+      // Chronic renal failure and nephrotic syndrome
+      //  Chronic kidney disease unspecified
+      "http://hl7.org/fhir/sid/icd-9-cm|585.9",
+      //  Chronic kidney disease unspecified
+      "http://hl7.org/fhir/sid/icd-10|N18.9",
+      //   Chronic kidney disease stage 5 (disorder)
+      "http://snomed.info/sct|433146000",
+      // Leukemia
+      //  Unspecified leukemia
+      "http://hl7.org/fhir/sid/icd-9-cm|208.9",
+      //  Lymphoid leukemia
+      "http://hl7.org/fhir/sid/icd-10|C91",
+      //  Myeloid leukemia
+      "http://hl7.org/fhir/sid/icd-10|C92",
+      //  Monocytic leukemia
+      "http://hl7.org/fhir/sid/icd-10|C93",
+      //  Other leukemias of specified cell type
+      "http://hl7.org/fhir/sid/icd-10|C94",
+      //  Leukemia of unspecified cell type
+      "http://hl7.org/fhir/sid/icd-10|C95",
+      //  Chronic myeloid leukemia disease (disorder)
+      "http://snomed.info/sct|92818009",
+      // lymphoma
+      //  Other malignant lymphomas unspecified site extranodal and solid organ sites
+      "http://hl7.org/fhir/sid/icd-9-cm|202.80",
+      //  Follicular lymphoma
+      "http://hl7.org/fhir/sid/icd-10|C82",
+      //  Non-follicular lymphoma
+      "http://hl7.org/fhir/sid/icd-10|C83",
+      //  Mature T/NK-cell lymphomas
+      "http://hl7.org/fhir/sid/icd-10|C84",
+      //  Oth5er specified and unspecified types of non-Hodgkin lymphoma
+      "http://hl7.org/fhir/sid/icd-10|C85",
+      //  Other specified types of T/NK-cell lymphoma
+      "http://hl7.org/fhir/sid/icd-10|C86",
+      //  Malignant immunoproliferative diseases and certain other B-cell lymphomas
+      "http://hl7.org/fhir/sid/icd-10|C88",
+      //  Non-Hodgkins lymphoma (disorder)
+      "http://snomed.info/sct|118601006",
+      // Hodgkin disease
+      //  Hodgkins disease unspecified type
+      "http://hl7.org/fhir/sid/icd-9-cm|201.9",
+      //  Hodgkin lymphoma
+      "http://hl7.org/fhir/sid/icd-10|C81",
+      //  Hodgkins disease mixed cellularity (disorder)
+      "http://snomed.info/sct|118609008",
+      // generalized malignancy
+      //  Disseminated malignant neoplasm without specification of site
+      "http://hl7.org/fhir/sid/icd-9-cm|199.0",
+      //   Other and unspecified malignant neoplasms of lymphoid hematopoietic and related tissue
+      "http://hl7.org/fhir/sid/icd-10|C96",
+      //   Widespread metastatic malignant neoplastic disease (disorder)
+      "http://snomed.info/sct|405843009",
+      // multiple myeloma
+      //  Multiple myeloma
+      "http://hl7.org/fhir/sid/icd-9-cm|203.0",
+      //  Multiple myeloma and malignant plasma cell neoplasms
+      "http://hl7.org/fhir/sid/icd-10|C90",
+      //   Multiple myeloma (disorder)
+      "http://snomed.info/sct|109989006",
+      // Solid organ transplant
+      //  Organ or tissue replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42",
+      //  Kidney replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.0",
+      //  Heart replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.1",
+      //  Heart valve replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.2",
+      //  Skin replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.3",
+      //  Bone replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.4",
+      //  Cornea replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.5",
+      //  Lung replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.6",
+      //  Liver replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.7",
+      //  Other specified organ or tissue replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.8",
+      //  Bone marrow replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.81",
+      //  Peripheral stem cells replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.82",
+      //  Pancreas replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.83",
+      //  Organ or tissue replaced by transplant intestines
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.84",
+      //  Other specified organ or tissue replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.89",
+      //  Unspecified organ or tissue replaced by transplant
+      "http://hl7.org/fhir/sid/icd-9-cm|V42.9",
+      //  Transplanted organ and tissue status
+      "http://hl7.org/fhir/sid/icd-10|Z94",
+      //  Kidney transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.0",
+      //  Heart transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.1",
+      //  Lung transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.2",
+      //  Heart and lungs transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.3",
+      //  Liver transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.4",
+      //  Skin transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.5",
+      //  Bone transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.6",
+      //  Corneal transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.7",
+      //  Other transplanted organ and tissue status
+      "http://hl7.org/fhir/sid/icd-10|Z94.8",
+      //  Bone marrow transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.81",
+      //  Intestine transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.82",
+      //  Pancreas transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.83",
+      //  Stem cells transplant status
+      "http://hl7.org/fhir/sid/icd-10|Z94.84",
+      //  Other transplanted organ and tissue status
+      "http://hl7.org/fhir/sid/icd-10|Z94.89",
+      //  Transplanted organ and tissue status unspecified
+      "http://hl7.org/fhir/sid/icd-10|Z94.9"], null, null, ResultTypeEnum.CONDITION, "ANY") );
+
+    //   Solid organ transplant (procedure)
+    List( size == 0 ) from collect( FhirResultObject() from getResult( patientRegistrations,
+    [ "http://snomed.info/sct|313039003",
+      //   Cadaveric renal transplant (procedure)
+      "http://snomed.info/sct|175902000",
+      //   Donor renal transplantation (procedure)
+      "http://snomed.info/sct|313030004",
+      //   Transplant of kidney (procedure)
+      "http://snomed.info/sct|70536003",
+      //  Transplantation of heart (procedure)
+      "http://snomed.info/sct|32413006",
+      //   Transplantation of liver (procedure)
+      "http://snomed.info/sct|18027006",
+      //   Transplantation of pancreas (procedure)
+      "http://snomed.info/sct|62438007",
+      //  Transplantation of spleen (procedure)
+      "http://snomed.info/sct|61535006"], null, null, ResultTypeEnum.PROCEDURE, "ANY") );
+
+    // Latrogenic immunosuppression including long-term systemic corticosteroid and radiation therapy.
+    //  Personal history of immunosuppressive therapy
+    List( size == 0 ) from collect( FhirResultObject() from getResult( patientRegistrations,
+    [ "http://hl7.org/fhir/sid/icd-9-cm|V87.46",
+      //  Personal history of systemic steroid therapy
+      "http://hl7.org/fhir/sid/icd-9-cm|V87.45",
+      //  Personal history of immunosupression therapy
+      "http://hl7.org/fhir/sid/icd-10|Z92.25",
+      //  Personal history of systemic steroid therapy
+      "http://hl7.org/fhir/sid/icd-10|Z92.241",
+      //  Long term systemic steroid user (finding)
+      "http://snomed.info/sct|12240661000119103"], null, null, ResultTypeEnum.CONDITION, "ANY") );
+
+    //   Radiation therapy procedure or service (procedure)
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|53438000", null, null, ResultTypeEnum.PROCEDURE, "ANY") )
+
+    // Anatomical or functional asplenia including
+    //  asplenia
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations,
+    [ "http://hl7.org/fhir/sid/icd-9-cm|759.0",
+      //  Acquired absence of spleen
+      "http://hl7.org/fhir/sid/icd-10|Z90.81",
+      //  Disorder of spleen (disorder)
+      "http://snomed.info/sct|51244008",
+      // Sickle cell disease or other hemoglobinopathies
+      //  Sickle-cell disease unspecified
+      "http://hl7.org/fhir/sid/icd-9-cm|282.60",
+      //  Sickle-cell disorders
+      "http://hl7.org/fhir/sid/icd-10|D57",
+      //  Sickle cell trait (disorder)
+      "http://snomed.info/sct|16402000",
+      // Congenital or acquired asplenia
+      //  Other acquired absence of organ
+      "http://hl7.org/fhir/sid/icd-9-cm|V45.79",
+      //  Acquired absence of spleen
+      // DUPLICATED ABOVE
+      // "http://hl7.org/fhir/sid/icd-10|Z90.81",
+      //  Asplenia (congenital)
+      "http://hl7.org/fhir/sid/icd-10|Q89.01",
+      //  Asplenia (disorder)
+      "http://snomed.info/sct|707147002",
+      //  Asplenia following surgical procedure (disorder)
+      "http://snomed.info/sct|724639003",
+      //  Congenital absence of spleen (disorder)
+      "http://snomed.info/sct|93030006",
+      // Splenic dysfunction
+      //  Disease of spleen unspecified
+      "http://hl7.org/fhir/sid/icd-9-cm|289.50",
+      //  Disease of spleen unspecified
+      "http://hl7.org/fhir/sid/icd-10|D73.9"], null, null, ResultTypeEnum.CONDITION, "ANY") );
+
+      // BELOW COMMENTED OUT BECAUSE ALREADY SPECIFIED ABOVE
+      //  Disorder of spleen (disorder)
+      // DUPLICATED ABOVE
+      // "http://snomed.info/sct|51244008"), null, null, ResultTypeEnum.CONDITION, "ANY") )
+      // Splenectomy
+      //  : Other acquired absence of organ
+      // DUPLICATED ABOVE
+      // "http://hl7.org/fhir/sid/icd-9-cm|V45.79"), null, null, ResultTypeEnum.CONDITION, "ANY") )
+      //  Acquired absence of spleen
+      // DUPLICATED ABOVE
+      // "http://hl7.org/fhir/sid/icd-10|Z90.81"
+
+    //  Splenectomy (procedure)
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|234319005", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
+
+  then
+    insert ( new String ( "PVAC_NOT_IMMUNO" ) );
+
 end
-
-
 
 /*
 rule "PNEUMONIA RECOMMENDATION RULE 1b IMMUNOCOMPROMISING_CRITERIA"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 950
-	
-when
-	$patient : Patient()
-	
-        not ( exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) ) )
-        
-	// SURVEY RESPONSES
-	$requestContext: CDSRequestContext()
-	$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
-	
-	// Answered NO to "Do you have any of these immunocompromising conditions for pneumonia conditions ...?"
-	Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-IMMU", "http://regenstrief.org/CDS/code/yesno", "2")
-then
-	insert ( new String ( "PVAC_NOT_IMMUNO" ) );
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 950
+
+  when
+    $patient : Patient()
+
+    not ( exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) ) )
+
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+
+    // Answered NO to "Do you have any of these immunocompromising conditions for pneumonia conditions ...?"
+    Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-IMMU", "http://regenstrief.org/CDS/code/yesnounsure", "2")
+
+  then
+    insert ( new String ( "PVAC_NOT_IMMUNO" ) );
+
 end
 */
 
 rule "PNEUMONIA RECOMMENDATION RULE 2a HIGH_RISK_CRITERIA"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 900
-	
-when
-	$patient : Patient()
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 900
 
-	
-// HIGH RISK
-	// Pneumonia High Risk Conditions
+  when
+    $patient : Patient()
 
-	// SURVEY RESPONSES
-	$requestContext: CDSRequestContext()
-	$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
-	
+    // HIGH RISK
+    // Pneumonia High Risk Conditions
 
-	// DID NOT ANSWER YES to "Do you have any of these high risk for pneumonia conditions?"
-	Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-HR", "http://regenstrief.org/CDS/code/yesno", "1")
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
+    // DID NOT ANSWER YES to "Do you have any of these high risk for pneumonia conditions?"
+    Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-HR", "http://regenstrief.org/CDS/code/yesnounsure", "1")
 
-		// Congestive heart failure
-		List( size == 0 ) from collect( FhirResultObject() from getResult( patientRegistrations, 
-		[ "http://hl7.org/fhir/sid/icd-9-cm|428.0",
-			// Congestive heart failureunspecified
-			//  Congestive heart failureunspecified
-			"http://hl7.org/fhir/sid/icd-10|I50.9",
-			//   Congestive heart failure (disorder)		
-			"http://snomed.info/sct|42343007",
-		// Emphysema 
-				//  Emphysema
-			"http://hl7.org/fhir/sid/icd-9-cm|492.8",
-			//  Emphysema
-			"http://hl7.org/fhir/sid/icd-10|J43",
-			//   Chronic emphysema (morphologic abnormality)
-			"http://snomed.info/sct|125295001",
-		// asthma
-			//  Extrinsic Asthma
-			"http://hl7.org/fhir/sid/icd-9-cm|493.0",
-			//  Intrinsic Asthma
-			"http://hl7.org/fhir/sid/icd-9-cm|493.1",
-			//  Chronic Obstructive Asthma
-			"http://hl7.org/fhir/sid/icd-9-cm|493.2",
-			//   Other forms of asthma
-			"http://hl7.org/fhir/sid/icd-9-cm|493.8",
-			//  Asthma unspecified type
-			"http://hl7.org/fhir/sid/icd-9-cm|493.9",
-			//  Asthma
-			"http://hl7.org/fhir/sid/icd-10|J45",
-			//   Asthma (disorder)
-			"http://snomed.info/sct|195967001",
-		// chronic lung disease
-			//  Other pulmonary insufficiency not elsewhere classified
-			"http://hl7.org/fhir/sid/icd-9-cm|518.82",
-			//  Chronic respiratory failure
-			"http://hl7.org/fhir/sid/icd-9-cm|518.83",
-			//  Other diseases of lung not elsewhere classified
-			"http://hl7.org/fhir/sid/icd-9-cm|518.89",
-			//  Other chronic respiratory diseases originating in the perinatal period
-			"http://hl7.org/fhir/sid/icd-10|P27.8",
-			//  Other disorders of lung
-			"http://hl7.org/fhir/sid/icd-10|J98.4",
-			//  Chronic obstructive lung disease (disorder)
-			"http://snomed.info/sct|13645005",
-			//  Chronic lung disease (disorder)
-			"http://snomed.info/sct|413839001",
-		// Chronic liver disease
-			//  Chronic liver disease and cirrhosis
-			"http://hl7.org/fhir/sid/icd-9-cm|571",
-			//  Other diseases of liver
-			"http://hl7.org/fhir/sid/icd-10|K76",
-			//    Chronic liver disease (disorder)
-			"http://snomed.info/sct|328383001",
-		// cirrhosis
-			//  Chronic liver disease and cirrhosis
-			// DUPLICATED ABOVE
-			// "http://hl7.org/fhir/sid/icd-9-cm|571",
-			//  Cirrhosis of liver without mention of alcohol
-			"http://hl7.org/fhir/sid/icd-9-cm|571.5",
-			//  Unspecified cirrhosis of liver
-			"http://hl7.org/fhir/sid/icd-10|K74.60",
-			//   Cirrhosis of liver (disorder)
-			"http://snomed.info/sct|19943007",
-		// Alcoholism
-			//  Alcohol dependence syndrome
-			"http://hl7.org/fhir/sid/icd-9-cm|303",
-			//  Other and unspecified alcohol dependence
-			"http://hl7.org/fhir/sid/icd-9-cm|303.9",
-			//  Alchol dependence
-			"http://hl7.org/fhir/sid/icd-10|F10.2",
-			//  Finding relating to alcohol drinking behavior (finding)
-			"http://snomed.info/sct|228273003",
-		// Diabetes mellitus
-			//  
-			"http://hl7.org/fhir/sid/icd-9-cm|571.5",
-			// DUPLICATED ABOVE
-			// "http://hl7.org/fhir/sid/icd-10|K74.60",
-			//  Diabetes mellitus (disorder)
-			"http://snomed.info/sct|73211009",
-		// Smoke cigarettes 
-			//  Personal history of tobacco use
-			"http://hl7.org/fhir/sid/icd-9-cm|V15.82",
-			//  Personal history of nicotine dependence
-			"http://hl7.org/fhir/sid/icd-10|Z87.891",
-			//   Smoker (finding)
-			"http://snomed.info/sct|77176002"], null, null, ResultTypeEnum.CONDITION, "ANY") );
+    // Congestive heart failure
+    List( size == 0 ) from collect( FhirResultObject() from getResult( patientRegistrations,
+    [ "http://hl7.org/fhir/sid/icd-9-cm|428.0",
+      // Congestive heart failureunspecified
+      //  Congestive heart failureunspecified
+      "http://hl7.org/fhir/sid/icd-10|I50.9",
+      //   Congestive heart failure (disorder)
+      "http://snomed.info/sct|42343007",
+      //  Emphysema
+      "http://hl7.org/fhir/sid/icd-9-cm|492.8",
+      //  Emphysema
+      "http://hl7.org/fhir/sid/icd-10|J43",
+      //   Chronic emphysema (morphologic abnormality)
+      "http://snomed.info/sct|125295001",
+      // asthma
+      //  Extrinsic Asthma
+      "http://hl7.org/fhir/sid/icd-9-cm|493.0",
+      //  Intrinsic Asthma
+      "http://hl7.org/fhir/sid/icd-9-cm|493.1",
+      //  Chronic Obstructive Asthma
+      "http://hl7.org/fhir/sid/icd-9-cm|493.2",
+      //   Other forms of asthma
+      "http://hl7.org/fhir/sid/icd-9-cm|493.8",
+      //  Asthma unspecified type
+      "http://hl7.org/fhir/sid/icd-9-cm|493.9",
+      //  Asthma
+      "http://hl7.org/fhir/sid/icd-10|J45",
+      //   Asthma (disorder)
+      "http://snomed.info/sct|195967001",
+      // chronic lung disease
+      //  Other pulmonary insufficiency not elsewhere classified
+      "http://hl7.org/fhir/sid/icd-9-cm|518.82",
+      //  Chronic respiratory failure
+      "http://hl7.org/fhir/sid/icd-9-cm|518.83",
+      //  Other diseases of lung not elsewhere classified
+      "http://hl7.org/fhir/sid/icd-9-cm|518.89",
+      //  Other chronic respiratory diseases originating in the perinatal period
+      "http://hl7.org/fhir/sid/icd-10|P27.8",
+      //  Other disorders of lung
+      "http://hl7.org/fhir/sid/icd-10|J98.4",
+      //  Chronic obstructive lung disease (disorder)
+      "http://snomed.info/sct|13645005",
+      //  Chronic lung disease (disorder)
+      "http://snomed.info/sct|413839001",
+      // Chronic liver disease
+      //  Chronic liver disease and cirrhosis
+      "http://hl7.org/fhir/sid/icd-9-cm|571",
+      //  Other diseases of liver
+      "http://hl7.org/fhir/sid/icd-10|K76",
+      //    Chronic liver disease (disorder)
+      "http://snomed.info/sct|328383001",
+      // cirrhosis
+      //  Chronic liver disease and cirrhosis
+      // DUPLICATED ABOVE
+      // "http://hl7.org/fhir/sid/icd-9-cm|571",
+      //  Cirrhosis of liver without mention of alcohol
+      "http://hl7.org/fhir/sid/icd-9-cm|571.5",
+      //  Unspecified cirrhosis of liver
+      "http://hl7.org/fhir/sid/icd-10|K74.60",
+      //   Cirrhosis of liver (disorder)
+      "http://snomed.info/sct|19943007",
+      // Alcoholism
+      //  Alcohol dependence syndrome
+      "http://hl7.org/fhir/sid/icd-9-cm|303",
+      //  Other and unspecified alcohol dependence
+      "http://hl7.org/fhir/sid/icd-9-cm|303.9",
+      //  Alchol dependence
+      "http://hl7.org/fhir/sid/icd-10|F10.2",
+      //  Finding relating to alcohol drinking behavior (finding)
+      "http://snomed.info/sct|228273003",
+      // Diabetes mellitus
+      "http://hl7.org/fhir/sid/icd-9-cm|571.5",
+      // DUPLICATED ABOVE
+      // "http://hl7.org/fhir/sid/icd-10|K74.60",
+      //  Diabetes mellitus (disorder)
+      "http://snomed.info/sct|73211009",
+      // Smoke cigarettes
+      //  Personal history of tobacco use
+      "http://hl7.org/fhir/sid/icd-9-cm|V15.82",
+      //  Personal history of nicotine dependence
+      "http://hl7.org/fhir/sid/icd-10|Z87.891",
+      //   Smoker (finding)
+      "http://snomed.info/sct|77176002"], null, null, ResultTypeEnum.CONDITION, "ANY") );
 
-then
-
-       insert ( new String ( "PVAC_NOT_HIGH_RISK" ) );
+  then
+    insert ( new String ( "PVAC_NOT_HIGH_RISK" ) );
 
 end
 
-
-
 /*
 rule "PNEUMONIA RECOMMENDATION RULE 2b HIGH_RISK_CRITERIA"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 850
-	
-when
-	$patient : Patient()
-	
-        not ( exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) ) )
-	
-	// SURVEY RESPONSES
-	$requestContext: CDSRequestContext()
-	$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
-	  
-	// Answered NO to "Do you have any of these high risk for pneumonia conditions ...?"
-	Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-HR", "http://regenstrief.org/CDS/code/yesno", "2")
-then
-	insert ( new String ( "PVAC_NOT_HIGH_RISK" ) );
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 850
+
+  when
+    $patient : Patient()
+
+    not ( exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) ) )
+
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+
+    // Answered NO to "Do you have any of these high risk for pneumonia conditions ...?"
+    Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-HR", "http://regenstrief.org/CDS/code/yesnounsure", "2")
+
+  then
+    insert ( new String ( "PVAC_NOT_HIGH_RISK" ) );
+
 end
 */
 
@@ -471,452 +463,520 @@ end
 // OVER 65 HEALTHY
 // ----------------------------------------------------------
 
-
 rule "PNEUMONIA RECOMMENDATION RULE 3a HEALTHY 65 OR OVER AND NO PNEUMONIA VACCINE"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 600
-	
-when
-	$patient : Patient()
-	FhirPatient(ageInYears >= 65 )
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 600
 
-	// NOT HIGH RISK
-        exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
-        // NOT IMMUNO
-        exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
-	
-	// SURVEY RESPONSES
-	$requestContext: CDSRequestContext()
-	$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
-	  
-	// Answered NO to "Have you had the PCV13 Pneumonia Vaccine since turnnig 65?"
-	Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-HEALTHY.PCV13", "http://regenstrief.org/CDS/code/yesno", "1")	
-	
-	// NO VACCINE IN PAST 
-		// PVC13
-		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
-		// PPSV23
-		// List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+  when
+    $patient : Patient()
+    FhirPatient(ageInYears >= 65 )
 
-then	
-	// Recommend PCV13
-	List cards = new ArrayList();	
-	cards.add(createImmunizationRecommendation(
-		IndicatorEnum.WARNING.name(), 
-			"Vaccinations", 
-			"One time", 
-			"All adults 65 and over should have the 13-valent pneumoccal conjugate vaccine (PCV13) and then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13",
-			"http://www.ama-assn.org/go/cpt",
-			"90670", 
-			"PCV13 Pneumonia Vaccine" , 
-			0));
-	  
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-	resp1.putValue("CARDS", cards);
-	insert(resp1);
+    // NOT HIGH RISK
+    exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
+    // NOT IMMUNO
+    exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
+
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+
+    // Answered NO or UNSURE to "Have you had the PCV13 Pneumonia Vaccine since turnnig 65?"
+    $pvac1healthypcv13 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-HEALTHY.PCV13") 
+
+    // NO VACCINE IN PAST
+    // PVC13
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // PPSV23
+    // List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+
+  then
+    // Recommend PCV13
+    List cards = new ArrayList();
+
+    String ind = IndicatorEnum.INFO.name();
+
+    String txt = "Check with your doctor. All adults 65 and over should have the 13-valent pneumoccal conjugate vaccine (PCV13) and then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13";
+
+    if ( "2".equals($pvac1healthypcv13) ) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults 65 and over should have the 13-valent pneumoccal conjugate vaccine (PCV13) and then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13";
+    }
+
+    cards.add(createImmunizationRecommendation(
+      ind,
+      "Vaccinations",
+      "One time",
+      txt,
+      "http://www.ama-assn.org/go/cpt",
+      "90670",
+      "PCV13 Pneumonia Vaccine" ,
+      0));
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
+
 end
-
 
 rule "PNEUMONIA RECOMMENDATION RULE 3b HEALTHY 65 OR OVER AND PCV13 PNEUMONIA VACCINE BUT NOT PPSV23"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 600
-	
-when
-	$patient : Patient()
-	FhirPatient(ageInYears >= 65 )
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 600
 
-	// NOT HIGH RISK
-        exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
-        // NOT IMMUNO
-        exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
-	
-	// SURVEY RESPONSES
-	$requestContext: CDSRequestContext()
-	$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
-	  
-	// Answered NO to "Have you had the PCV13 Pneumonia Vaccine since turnnig 65?"
-	Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-HEALTHY.PCV13", "http://regenstrief.org/CDS/code/yesno", "1")	
+  when
+    $patient : Patient()
+    FhirPatient(ageInYears >= 65 )
 
-	// Answered YES to "Have you had the PPSV23 Pneumonia Vaccine since turning 65?"	
-	Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-HEALTHY.PCV13.PPSV23", "http://regenstrief.org/CDS/code/yesno", "1")	
-	
-	// NO VACCINE IN PAST 
-		// PVC13
-		// List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
-		// PPSV23
-		// List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // NOT HIGH RISK
+    exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
+    // NOT IMMUNO
+    exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
 
-then	
-	// Recommend PCV23
-	List cards = new ArrayList();	
-	cards.add(createImmunizationRecommendation(
-		IndicatorEnum.WARNING.name(), 
-			"Vaccinations", 
-			"One time", 
-			"All adults 65 and over that have been given the 13-valent pneumoccal conjugate vaccine (PCV13) should then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13",
-			"http://www.ama-assn.org/go/cpt",
-			"90732", 
-			"PPSV23 Pneumonia Vaccine follow up 1 year after PCV13",
-			0));
-	  
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-	resp1.putValue("CARDS", cards);
-	insert(resp1);
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+
+    // Answered NO or UNSURE to "Have you had the PCV13 Pneumonia Vaccine since turnnig 65?"
+    $pvac1healthypcv13 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-HEALTHY.PCV13") 
+
+    // Answered YES to "Have you had the PPSV23 Pneumonia Vaccine since turning 65?"
+    Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-HEALTHY.PCV13.PPSV23", "http://regenstrief.org/CDS/code/yesno", "1")
+
+    // NO VACCINE IN PAST
+    // PVC13
+    // List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // PPSV23
+    // List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+
+  then
+    // Recommend PPSV23
+    List cards = new ArrayList();
+
+    String ind = IndicatorEnum.INFO.name();
+
+    String txt = "Check with your doctor. All adults 65 and over that have been given the 13-valent pneumoccal conjugate vaccine (PCV13) should then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13.";
+
+    if ( "2".equals($pvac1healthypcv13) ) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults 65 and over that have been given the 13-valent pneumoccal conjugate vaccine (PCV13) should then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13.";
+    }
+
+    cards.add(createImmunizationRecommendation(
+      ind,
+      "Vaccinations",
+      "One time",
+      txt,
+      "http://www.ama-assn.org/go/cpt",
+      "90732",
+      "PPSV23 Pneumonia Vaccine follow up 1 year after PCV13",
+      0));
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
+
 end
-
-
 
 // ----------------------------------------------------------
 // OVER 65 IMMUNOCOMPROMISED
 // ----------------------------------------------------------
 
 rule "PNEUMONIA RECOMMENDATION RULE 4a Immunocompromised 65 OR OVER"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 500
-when
-	$patient : Patient()
-	FhirPatient(ageInYears >= 65 )
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 500
 
-        exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
-        not ( exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) ) )
-        
-	// SURVEY RESPONSES
-	$requestContext: CDSRequestContext()
-	$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+  when
+    $patient : Patient()
+    FhirPatient(ageInYears >= 65 )
 
-	// Answered NO to ""Have you had the PPSV23 Pneumonia Vaccine since turning 65?"
-	Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-IMMU.PCV13.PPSV23", "http://regenstrief.org/CDS/code/yesno", "1")	
+    exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
+    not ( exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) ) )
 
-	// Answered YES to "Did you have your last the PVC13 immunization over 8 weeks ago and has it been over 5 years since your last PPSV23 immunization?"
-	Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-IMMU.PCV13.GT.8WKS", "http://regenstrief.org/CDS/code/yesno", "1")
-	
-	// NO VACCINE IN PAST 
-		// PVC13
-//		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
-		// PPSV23
-		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-then
+    // Answered NO or UNSURE to ""Have you had the PPSV23 Pneumonia Vaccine since turning 65?"
+    $pvac1immupcv13ppsv23 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-IMMU.PCV13.PPSV23") 
 
-	// Recommend PPSV23
-	List cards = new ArrayList();	
-	cards.add(createImmunizationRecommendation(
-		IndicatorEnum.WARNING.name(), 
-			"Vaccinations", 
-			"One time", 
-			"All adults 65 and over that have Immunocompromising Conditions should be given the 23-valent pneumococcal vaccine (PPSV23) at least 8 weeks after PCV13 and 5 years after most recent previous PPSV23.",
-			"http://www.ama-assn.org/go/cpt",
-			"90732", 
-			"PPSV23 Pneumonia Vaccine when over 65",
-			0));
-	  
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-	resp1.putValue("CARDS", cards);
-	insert(resp1);
+    // Answered YES to "Did you have your last the PVC13 immunization over 8 weeks ago and has it been over 5 years since your last PPSV23 immunization?"
+    Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-IMMU.PCV13.GT.8WKS", "http://regenstrief.org/CDS/code/yesno", "1")
+
+    // NO VACCINE IN PAST
+    // PVC13
+    //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // PPSV23
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+
+  then
+
+    // Recommend PPSV23
+    List cards = new ArrayList();
+
+    String ind = IndicatorEnum.INFO.name();
+
+    String txt = "Check with your doctor. All adults 65 and over that have Immunocompromising Conditions should be given the 23-valent pneumococcal vaccine (PPSV23) at least 8 weeks after PCV13 and 5 years after most recent previous PPSV23.";
+
+    if ( "2".equals($pvac1immupcv13ppsv23) ) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults 65 and over that have Immunocompromising Conditions should be given the 23-valent pneumococcal vaccine (PPSV23) at least 8 weeks after PCV13 and 5 years after most recent previous PPSV23.";
+    }
+
+
+    cards.add(createImmunizationRecommendation(
+      ind,
+      "Vaccinations",
+      "One time",
+      txt,
+      "http://www.ama-assn.org/go/cpt",
+      "90732",
+      "PPSV23 Pneumonia Vaccine when over 65",
+      0));
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
 
 end
-
-
 
 // ----------------------------------------------------------
 // OVER 65 HIGH RISK
 // ----------------------------------------------------------
 
 rule "PNEUMONIA RECOMMENDATION RULE 5a High Risk 65 OR OVER PCV13"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 450
-when
-	$patient : Patient()
-	FhirPatient(ageInYears >= 65 )
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 450
 
-        not ( exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) ) )
-        exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
-        
-	// SURVEY RESPONSES
-	$requestContext: CDSRequestContext()
-	$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+  when
+    $patient : Patient()
+    FhirPatient(ageInYears >= 65 )
 
-	// Answered NO to "Have you had the PCV13 Pneumonia Vaccine since turnnig 65?"
-	Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-HR.PCV13", "http://regenstrief.org/CDS/code/yesno", "1")	
-	
-	// NO VACCINE IN PAST 
-		// PVC13
-		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
-		// PPSV23
-//		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    not ( exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) ) )
+    exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
 
-then	
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-	// Recommend PCV13
-	List cards = new ArrayList();	
-	cards.add(createImmunizationRecommendation(
-		IndicatorEnum.WARNING.name(), 
-			"Vaccinations", 
-			"One time", 
-			"All adults 65 and over with High Risk Conditions should have the 13-valent pneumoccal conjugate vaccine (PCV13) and then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13",
-			"http://www.ama-assn.org/go/cpt",
-			"90670", 
-			"PCV13 Pneumonia Vaccine" , 
-			0));
-	  
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-	resp1.putValue("CARDS", cards);
-	insert(resp1);
+    // Answered NO or UNSURE to "Have you had the PCV13 Pneumonia Vaccine since turning 65?"
+    $pvac1hrpcv13 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-HR.PCV13") 
 
+    // NO VACCINE IN PAST
+    // PVC13
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // PPSV23
+    //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+
+  then
+
+    // Recommend PCV13
+    List cards = new ArrayList();
+
+    String ind = IndicatorEnum.INFO.name();
+
+    String txt = "Check with your doctor. All adults 65 and over with High Risk Conditions should have the 13-valent pneumoccal conjugate vaccine (PCV13) and then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13.";
+
+    if ( "2".equals($pvac1hrpcv13) ) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults 65 and over with High Risk Conditions should have the 13-valent pneumoccal conjugate vaccine (PCV13) and then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13.";
+    }
+
+    cards.add(createImmunizationRecommendation(
+      ind,
+      "Vaccinations",
+      "One time",
+      txt,
+      "http://www.ama-assn.org/go/cpt",
+      "90670",
+      "PCV13 Pneumonia Vaccine" ,
+      0));
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
 
 end
-
 
 rule "PNEUMONIA RECOMMENDATION RULE 5b High Risk 65 OR OVER PPSV23"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 400
-when
-	$patient : Patient()
-	FhirPatient(ageInYears >= 65 )
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 400
 
-        not ( exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) ) )
-        exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
-        
-	// SURVEY RESPONSES
-	$requestContext: CDSRequestContext()
-	$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+  when
+    $patient : Patient()
+    FhirPatient(ageInYears >= 65 )
 
-	// Answered NO to ""Have you had the PPSV23 Pneumonia Vaccine since turning 65?"
-	Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-HR.PCV13.PPSV23", "http://regenstrief.org/CDS/code/yesno", "1")	
+    not ( exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) ) )
+    exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
 
-	// Answered YES to "Did you have your last the PVC13 immunization over 1 year ago?"
-	Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-HR.PCV13.GT.1YR", "http://regenstrief.org/CDS/code/yesno", "1")
-        
-	
-	// NO VACCINE IN PAST 
-		// PVC13
-//		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
-		// PPSV23
-		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-then	
+    // Answered NO or UNSURE to "Have you had the PPSV23 Pneumonia Vaccine since turning 65?"
+    $pvac1hrpcv13ppsv23 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-HR.PCV13.PPSV23") 
 
-	// Recommend PPSV23
-	List cards = new ArrayList();	
-	cards.add(createImmunizationRecommendation(
-		IndicatorEnum.WARNING.name(), 
-			"Vaccinations", 
-			"One time", 
-			"All adults 65 and over that have High Risk Conditions should be given the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13.",
-			"http://www.ama-assn.org/go/cpt",
-			"90732", 
-			"PPSV23 Pneumonia Vaccine when over 65",
-			0));
-	  
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-	resp1.putValue("CARDS", cards);
-	insert(resp1);
+    // Answered YES to "Did you have your last the PVC13 immunization over 1 year ago?"
+    Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-HR.PCV13.GT.1YR", "http://regenstrief.org/CDS/code/yesno", "1")
+
+    // NO VACCINE IN PAST
+    // PVC13
+    //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // PPSV23
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+
+  then
+    // Recommend PPSV23
+    List cards = new ArrayList();
+
+    String ind = IndicatorEnum.INFO.name();
+
+    String txt = "Check with your doctor. All adults 65 and over that have High Risk Conditions should be given the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13.";
+
+    if ( "2".equals($pvac1hrpcv13ppsv23) ) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults 65 and over that have High Risk Conditions should be given the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13.";
+    }
+
+    cards.add(createImmunizationRecommendation(
+      ind,
+      "Vaccinations",
+      "One time",
+      txt,
+      "http://www.ama-assn.org/go/cpt",
+      "90732",
+      "PPSV23 Pneumonia Vaccine when over 65",
+      0));
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
 
 end
-
-
 
 // ----------------------------------------------------------
 // OVER 19 - 64 HEALTHY - NO RECOMMENDATION
 // ----------------------------------------------------------
 
-
 /*
 rule "PNEUMONIA RECOMMENDATION RULE 6 No Cond 19 to 64"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 300
-when
-	$patient : Patient()
-	FhirPatient(ageInYears >= 19 )
-	FhirPatient(ageInYears <= 64 )
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 300
 
-        exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
-        exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
-	
-	// NO VACCINE IN PAST 
-		// PVC13
-//		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
-		// PPSV23
-//		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+  when
+    $patient : Patient()
+    FhirPatient(ageInYears >= 19 )
+    FhirPatient(ageInYears <= 64 )
 
-then	
+    exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
+    exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
 
+    // NO VACCINE IN PAST
+    // PVC13
+    //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // PPSV23
+    //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+
+  then
 
 end
-
 */
-
-
 
 // ----------------------------------------------------------
 // OVER 19 - 64 HIGH RISK
 // ----------------------------------------------------------
- 
 
 rule "PNEUMONIA RECOMMENDATION RULE 7 High Risk 19 to 64"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 300
-when
-	$patient : Patient()
-	FhirPatient(ageInYears >= 19 )
-	FhirPatient(ageInYears <= 64 )
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 300
 
-        not ( exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) ) )
-        exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
-        
-        
-	// SURVEY RESPONSES
-	$requestContext: CDSRequestContext()
-	$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+  when
+    $patient : Patient()
+    FhirPatient(ageInYears >= 19 )
+    FhirPatient(ageInYears <= 64 )
 
-	// Answered NO to "Have you had the PPSV23 Pneumonia Vaccine?"
-	Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-HR.PCV23", "http://regenstrief.org/CDS/code/yesno", "1")
+    not ( exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) ) )
+    exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
 
-	// NO VACCINE IN PAST 
-		// PVC13
-//		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
-		// PPSV23
-		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-then	
+    // Answered NO or UNSURE to "Have you had the PPSV23 Pneumonia Vaccine?"
+    $pvac1hrppsv23 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-HR.PPSV23") 
 
-	// Recommend PPSV23
-	List cards = new ArrayList();	
-	cards.add(createImmunizationRecommendation(
-		IndicatorEnum.WARNING.name(), 
-			"Vaccinations", 
-			"One time", 
-			"All adults between 19 and 64 that have High Risk Conditions should be given the 23-valent pneumococcal vaccine (PPSV23).",
-			"http://www.ama-assn.org/go/cpt",
-			"90732", 
-			"PPSV23 Pneumonia Vaccine between 19 and 64 with High Risk Conditions",
-			0));
-	  
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-	resp1.putValue("CARDS", cards);
-	insert(resp1);
+    // NO VACCINE IN PAST
+    // PVC13
+    //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // PPSV23
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+
+  then
+
+    // Recommend PPSV23
+    List cards = new ArrayList();
+
+    String ind = IndicatorEnum.INFO.name();
+
+    String txt = "Check with your doctor. All adults between 19 and 64 that have High Risk Conditions should be given the 23-valent pneumococcal vaccine (PPSV23).";
+
+    if ( "2".equals($pvac1hrppsv23) ) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults between 19 and 64 that have High Risk Conditions should be given the 23-valent pneumococcal vaccine (PPSV23).";
+    }
+
+    cards.add(createImmunizationRecommendation(
+      ind,
+      "Vaccinations",
+      "One time",
+      txt,
+      "http://www.ama-assn.org/go/cpt",
+      "90732",
+      "PPSV23 Pneumonia Vaccine between 19 and 64 with High Risk Conditions",
+      0));
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
 
 end
-
-
 
 // ----------------------------------------------------------
 // OVER 19 - 64 IMMUNOCOMPROMISED
 // ----------------------------------------------------------
 
 rule "PNEUMONIA RECOMMENDATION RULE 8a Immuno 19 to 64"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 200
-when
-	$patient : Patient()
-	FhirPatient(ageInYears >= 19 )
-	FhirPatient(ageInYears <= 64 )
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 200
 
-        exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
-        not ( exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) ) )
-        
-	// SURVEY RESPONSES
-	$requestContext: CDSRequestContext()
-	$response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+  when
+    $patient : Patient()
+    FhirPatient(ageInYears >= 19 )
+    FhirPatient(ageInYears <= 64 )
 
-	// Answered NO to "Have you had the PCV13 Pneumonia Vaccine?"
-	Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-IMMU.PCV13", "http://regenstrief.org/CDS/code/yesno", "1")
+    exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
+    not ( exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) ) )
 
-	// NO VACCINE IN PAST 
-		// PVC13
-		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
-		// PPSV23
-//		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-then	
-	// Recommend PCV13
-	List cards = new ArrayList();	
-	cards.add(createImmunizationRecommendation(
-		IndicatorEnum.WARNING.name(), 
-			"Vaccinations", 
-			"One time", 
-			"All adults 65 and over with High Risk Conditions should have the 13-valent pneumoccal conjugate vaccine (PCV13) and then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13",
-			"http://www.ama-assn.org/go/cpt",
-			"90670", 
-			"PCV13 Pneumonia Vaccine" , 
-			0));
-	  
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-	resp1.putValue("CARDS", cards);
-	insert(resp1);
+    // Answered NO or UNSURE to "Have you had the PCV13 Pneumonia Vaccine?"
+    $pvac1immupcv13 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-IMMU.PCV13") 
+
+    // NO VACCINE IN PAST
+    // PVC13
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // PPSV23
+    //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+
+  then
+    // Recommend PCV13
+    List cards = new ArrayList();
+
+    String ind = IndicatorEnum.INFO.name();
+
+    String txt = "Check with your doctor. All adults 65 and over with High Risk Conditions should have the 13-valent pneumoccal conjugate vaccine (PCV13) and then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13.";
+
+    if ( "2".equals($pvac1immupcv13) ) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults 65 and over with High Risk Conditions should have the 13-valent pneumoccal conjugate vaccine (PCV13) and then follow up with the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after PCV13.";
+    }
+
+    cards.add(createImmunizationRecommendation(
+      ind,
+      "Vaccinations",
+      "One time",
+      txt,
+      "http://www.ama-assn.org/go/cpt",
+      "90670",
+      "PCV13 Pneumonia Vaccine" ,
+      0));
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
+
 end
 
-
-
 rule "PNEUMONIA RECOMMENDATION RULE 8b Immuno 19 to 64"
-	dialect "mvel"
-	enabled true
-	agenda-group "PNEUMONIA_RECOMMENDATION"
-	salience 200
-when
-              $patient : Patient()
-              FhirPatient(ageInYears >= 19 )
-              FhirPatient(ageInYears <= 64 )
+  dialect "mvel"
+  enabled true
+  agenda-group "PNEUMONIA_RECOMMENDATION"
+  salience 200
 
-              exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
-              not ( exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) ) )
+  when
+    $patient : Patient()
+    FhirPatient(ageInYears >= 19 )
+    FhirPatient(ageInYears <= 64 )
 
-              // SURVEY RESPONSES
-              $requestContext: CDSRequestContext()
-              $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+    exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
+    not ( exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) ) )
 
-              // Answered YES to "Have you had the PCV13 Pneumonia Vaccine?"
-              Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-IMMU.PCV13", "http://regenstrief.org/CDS/code/yesno", "1")
-              // Answered NO to "Have you had the PCV23 Pneumonia Vaccine?"
-              Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-IMMU.PCV13.PPSV23", "http://regenstrief.org/CDS/code/yesno", "2")
-              
-              // Answered YES to "Did you have the PVC13 over 8 weeks ago?"
-              // or
-              // Answered YES to "Did you have the PPSV23 over 5 years ago?"
+    // SURVEY RESPONSES
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-              not ( 
-              Boolean ( booleanValue == false) from codedAnswerEquals($response, "PVAC-1-IMMU.PCV13.GT.8WKS", "http://regenstrief.org/CDS/code/yesno", "1" ) 
-              and
-              Boolean ( booleanValue == false ) from codedAnswerEquals($response, "PVAC-1-IMMU.PCV13.PPSV23.GT.5YR", "http://regenstrief.org/CDS/code/yesno", "1" ) 
-              ) 
+    // Answered YES to "Have you had the PCV13 Pneumonia Vaccine?"
+    Boolean(booleanValue == true) from codedAnswerEquals($response, "PVAC-1-IMMU.PCV13", "http://regenstrief.org/CDS/code/yesno", "1")
 
+    // Answered NO or UNSURE to "Have you had the PPSV23 Pneumonia Vaccine?"
+    $pvac1immupcv13ppsv23 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-IMMU.PCV13.PPSV23") 
 
-	// NO VACCINE IN PAST 
-		// PVC13
-//		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
-		// PPSV23
-		List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // Answered YES to "Did you have the PVC13 over 8 weeks ago?"
+    // or
+    // Answered YES to "Did you have the PPSV23 over 5 years ago?"
+    not (
+      Boolean ( booleanValue == false) from codedAnswerEquals($response, "PVAC-1-IMMU.PCV13.GT.8WKS", "http://regenstrief.org/CDS/code/yesnounsure", "1" )
+      and
+      Boolean ( booleanValue == false ) from codedAnswerEquals($response, "PVAC-1-IMMU.PCV13.PPSV23.GT.5YR", "http://regenstrief.org/CDS/code/yesnounsure", "1" )
+    )
 
-then	
-	// Recommend PPSV23
-	List cards = new ArrayList();	
-	cards.add(createImmunizationRecommendation(
-		IndicatorEnum.WARNING.name(), 
-			"Vaccinations", 
-			"One time", 
-			"All adults between 19 and 64 that have Immunocompromising conditions should been given the 23-valent pneumococcal vaccine (PPSV23) as a follow up 8 weeks after the PCV13 and again after 5 years from first PPSV23.",
-			"http://www.ama-assn.org/go/cpt",
-			"90732", 
-			"PPSV23 Pneumonia Vaccine between 19 and 64 with Immunocompromising",
-			0));
-	  
-	DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
-	resp1.putValue("CARDS", cards);
-	insert(resp1);
+    // NO VACCINE IN PAST
+    // PVC13
+    //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    // PPSV23
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+
+  then
+    // Recommend PPSV23
+    List cards = new ArrayList();
+
+    String ind = IndicatorEnum.INFO.name();
+
+    String txt = "Check with your doctor. All adults between 19 and 64 that have Immunocompromising conditions should been given the 23-valent pneumococcal vaccine (PPSV23) as a follow up 8 weeks after the PCV13 and again after 5 years from first PPSV23.";
+
+    if ( "2".equals($pvac1immupcv13ppsv23) ) {
+      ind = IndicatorEnum.WARNING.name();
+      txt = "All adults between 19 and 64 that have Immunocompromising conditions should been given the 23-valent pneumococcal vaccine (PPSV23) as a follow up 8 weeks after the PCV13 and again after 5 years from first PPSV23.";
+    }
+
+    cards.add(createImmunizationRecommendation(
+      ind,
+      "Vaccinations",
+      "One time",
+      txt,
+      "http://www.ama-assn.org/go/cpt",
+      "90732",
+      "PPSV23 Pneumonia Vaccine between 19 and 64 with Immunocompromising",
+      0));
+
+    DroolsRuleResponse resp1 = new DroolsRuleResponse("message" ,"882", "RECOMMENDATION");
+    resp1.putValue("CARDS", cards);
+    insert(resp1);
+
 end
