@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Pull rules from Preventorium
+# Pull rules from Preventorium and update local files
 
 import requests
 import re
