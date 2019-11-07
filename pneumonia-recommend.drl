@@ -359,6 +359,12 @@ rule "PNEUMONIA RECOMMENDATION RULE 2a HIGH_RISK_CRITERIA"
       "http://hl7.org/fhir/sid/icd-10|J43",
       //   Chronic emphysema (morphologic abnormality)
       "http://snomed.info/sct|125295001",
+      // Chronic obstructive lung disease (disorder)
+      "http://snomed.info/sct|13645005",
+      // Chronic obstructive bronchitis (disorder)
+      "http://snomed.info/sct|185086009",
+      // Pulmonary emphysema (disorder)
+      "http://snomed.info/sct|87433001",
       // asthma
       //  Extrinsic Asthma
       "http://hl7.org/fhir/sid/icd-9-cm|493.0",
