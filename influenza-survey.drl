@@ -25,13 +25,29 @@ rule "Flu Shot In Past Year"
       ResultTypeEnum.IMMUNIZATION,
       "ANY")
     )
+    List(size == 0) from collect(FhirResultObject()
+      from getResult(
+      patientRegistrations, "http://hl7.org/fhir/sid/cvx|155",
+      getWithinLastDayJoda(365),
+      getWithinLastDayJoda(0),
+      ResultTypeEnum.PROCEDURE,
+      "ANY")
+    )
 
     List(size== 0) from collect(FhirResultObject()
       from getResult(
-      patientRegistrations, "http://hl7.org/fhir/sid/cvx|168,http://hl7.org/fhir/sid/cvx|144,http://hl7.org/fhir/sid/cvx|166,http://snomed.info/sct|86198006",
+      patientRegistrations, ["http://hl7.org/fhir/sid/cvx|168","http://hl7.org/fhir/sid/cvx|144","http://hl7.org/fhir/sid/cvx|166","http://snomed.info/sct|86198006"],
       getWithinLastDayJoda(365),
       getWithinLastDayJoda(0),
       ResultTypeEnum.IMMUNIZATION,
+      "ANY")
+    )
+    List(size== 0) from collect(FhirResultObject()
+      from getResult(
+      patientRegistrations, ["http://hl7.org/fhir/sid/cvx|168","http://hl7.org/fhir/sid/cvx|144","http://hl7.org/fhir/sid/cvx|166","http://snomed.info/sct|86198006"],
+      getWithinLastDayJoda(365),
+      getWithinLastDayJoda(0),
+      ResultTypeEnum.PROCEDURE,
       "ANY")
     )
 

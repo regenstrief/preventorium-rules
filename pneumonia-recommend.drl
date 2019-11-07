@@ -488,6 +488,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 3a HEALTHY 65 OR OVER AND NO PNEUMONIA VACCI
     // NO VACCINE IN PAST
     // PVC13
     List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
     // PPSV23
     // List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
 
@@ -612,6 +613,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 4a Immunocompromised 65 OR OVER"
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
     // PPSV23
     List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
 
   then
 
@@ -671,6 +673,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 5a High Risk 65 OR OVER PCV13"
     // NO VACCINE IN PAST
     // PVC13
     List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
     // PPSV23
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
 
@@ -732,6 +735,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 5b High Risk 65 OR OVER PPSV23"
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
     // PPSV23
     List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
 
   then
     // Recommend PPSV23
@@ -822,6 +826,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 7 High Risk 19 to 64"
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
     // PPSV23
     List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
 
   then
 
@@ -881,6 +886,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 8a Immuno 19 to 64"
     // NO VACCINE IN PAST
     // PVC13
     List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
     // PPSV23
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
 
@@ -951,6 +957,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 8b Immuno 19 to 64"
     //List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
     // PPSV23
     List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+    List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
 
   then
     // Recommend PPSV23

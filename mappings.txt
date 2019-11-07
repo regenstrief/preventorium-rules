@@ -1,0 +1,14 @@
+# Mapping of rule name to file name
+
+BREAST CANCER SURVEY=breast-cancer-survey.drl
+BREAST CANCER RECOMMENDATION=breast-cancer-recommend.drl
+Colon Cancer Screen Survey=colon-cancer-survey.drl
+Colon Cancer Screen Recommend=colon-cancer-recommend.drl
+Influenza Vaccine Survey=influenza-survey.drl
+Influenza Vaccine Recommend=influenza-recommend.drl
+Lung Cancer Survey=lung-cancer-survey.drl
+Lung Cancer Recommendations=lung-cancer-recommend.drl
+Pneumonia_survey=pneumonia-survey.drl
+Pneumonia_recommendation=pneumonia-recommend.drl
+TDAP Survey=tetanus-survey.drl
+TDAP Recommend=tetanus-recommend.drl
