@@ -353,6 +353,8 @@ rule "PNEUMONIA RECOMMENDATION RULE 2a HIGH_RISK_CRITERIA"
       "http://hl7.org/fhir/sid/icd-10|I50.9",
       //   Congestive heart failure (disorder)
       "http://snomed.info/sct|42343007",
+      // Chronic congestive heart failure (disorder)  
+      "http://snomed.info/sct|88805009",  
       //  Emphysema
       "http://hl7.org/fhir/sid/icd-9-cm|492.8",
       //  Emphysema
