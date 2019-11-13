@@ -3,7 +3,7 @@ rule "CRC Screen Survey"
   enabled true
   when
     FhirPatient(ageInYears >= 40)
-    FhirPatient(ageInYears <= 75)
+    FhirPatient(ageInYears < 76)
   then
     drools.setFocus("CRC_SCREENING")
 end
