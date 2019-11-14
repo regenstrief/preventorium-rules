@@ -49,10 +49,10 @@ rule "BREAST CANCER Rule 1 - No Family History BREAST CANCER "
       ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76091"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
       ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "76092"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
       ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "24623002"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
+      ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "241055006"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
+      ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "71651007"), getWithinLastDayJoda(730), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
 
   then
-
-    // cacheAssert(drools, "noFDRHistoryCRC")
 
     QuestionnaireQuestionResultBuilder builder = new QuestionnaireQuestionResultBuilder();
     Group group =  builder
