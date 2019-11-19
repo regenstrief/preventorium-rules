@@ -289,7 +289,7 @@ rule "PNEUMONIA SURVEY RULE 1 IMMUNOCOMPROMISING_CRITERIA"
     List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|234319005", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
 
   then
-       insert ( new String ( "PVAC_NOT_IMMUNO" ) );
+       insert ( new String ( "PVAC_NOT_IMMUNOCOMPROMISED" ) );
 
 end
 
@@ -414,7 +414,7 @@ rule "PNEUMONIA SURVEY RULE 3 NO_COND 65 OR OVER"
     FhirPatient(ageInYears >= 65 )
 
     exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
-    exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
+    exists ( String ( toString() == "PVAC_NOT_IMMUNOCOMPROMISED" ) )
 
     // NO VACCINE IN PAST
     // PVC13
@@ -521,7 +521,7 @@ rule "PNEUMONIA SURVEY RULE 4 Immunocompromised 65 OR OVER"
     FhirPatient(ageInYears >= 65 )
 
     exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
-    not ( exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) ) )
+    not ( exists ( String ( toString() == "PVAC_NOT_IMMUNOCOMPROMISED" ) ) )
 
     // NO VACCINE IN PAST
     // PVC13
@@ -567,7 +567,7 @@ rule "PNEUMONIA SURVEY RULE 5 High Risk 65 OR OVER"
     FhirPatient(ageInYears >= 65 )
 
     not ( exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) ) )
-    exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
+    exists ( String ( toString() == "PVAC_NOT_IMMUNOCOMPROMISED" ) )
 
     // NO VACCINE IN PAST
     // PVC13
@@ -584,7 +584,7 @@ rule "PNEUMONIA SURVEY RULE 5 High Risk 65 OR OVER"
 
     Group group =  builder
       .startGroup("PVAC-1-HRg",  "http://regenstrief.org/cds/", "PreventionSurvey", "Pneumonia Vaccines", "", true)
-        .startQuestion("PVAC-1-HR.PCV13", "http://regenstrief.org/cds/", "PVAC", "Have you had the PCV13 Pneumonia Vaccine since turnnig 65?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesnounsure"))
+        .startQuestion("PVAC-1-HR.PCV13", "http://regenstrief.org/cds/", "PVAC", "Have you had the PCV13 Pneumonia Vaccine since turning 65?", AnswerFormatEnum.CHOICE, new ResourceReferenceDt("#yesnounsure"))
           .startGroup("PVAC-1-HR.PCV13g", "http://regenstrief.org/cds/", "PreventionSurvey-Pneumonia", "")
             .startExtension("http://hl7.org/fhir/StructureDefinition/questionnaire-enableWhen")
               .addExtension("question", "PVAC-1-HR.PCV13")
@@ -623,7 +623,7 @@ rule "PNEUMONIA SURVEY RULE 6 No Cond 19 to 64"
     FhirPatient(ageInYears <= 64 )
 
     exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
-    exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
+    exists ( String ( toString() == "PVAC_NOT_IMMUNOCOMPROMISED" ) )
 
     // NO VACCINE IN PAST
     // PVC13
@@ -708,7 +708,7 @@ rule "PNEUMONIA SURVEY RULE 7 High Risk 19 to 64"
     FhirPatient(ageInYears <= 64 )
 
     not ( exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) ) )
-    exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) )
+    exists ( String ( toString() == "PVAC_NOT_IMMUNOCOMPROMISED" ) )
 
     // NO VACCINE IN PAST
     // PVC13
@@ -747,7 +747,7 @@ rule "PNEUMONIA SURVEY RULE 8 Immuno 19 to 64"
     FhirPatient(ageInYears <= 64 )
 
     exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) )
-    not ( exists ( String ( toString() == "PVAC_NOT_IMMUNO" ) ) )
+    not ( exists ( String ( toString() == "PVAC_NOT_IMMUNOCOMPROMISED" ) ) )
 
     // NO VACCINE IN PAST
     // PVC13
