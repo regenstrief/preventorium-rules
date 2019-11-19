@@ -423,25 +423,25 @@ Summary of pneumonia recommendation logic:
 
 For older than 65, give PCV13 if:
   * No h/o PCV13
-  * No or unsure if they’ve had PCV13
+  * No or unsure if they've had PCV13
   * No PPSV23 within 1 year
 
 For older than 65 not immunocompromised, give PPSV23 if:
   * No PPSV23 after 65yo
   * No PPSV23 within 5 years
-  * ( PCV13 ≥ 1 year ago OR patient says they’ve gotten PCV13 )
+  * (PCV13 ≥ 1 year ago OR patient says they've gotten PCV13)
 
 For immunocompromised (any age), give PPSV23 if:
   * No PPSV23 within 5 years
-  * (PCV13 ≥ 8 weeks ago OR patient says they’ve gotten PCV13)
+  * (PCV13 ≥ 8 weeks ago OR patient says they've gotten PCV13)
 
 For under 65 and immunocompromised, give PCV13 if:
   * No PCV13
-  * No or unsure if they’ve gotten PCV13
+  * No or unsure if they've gotten PCV13
 
 For under 65 high risk & not immunocompromised, give PPSV23 if:
   * No PPSV23
-  * No or unsure if they’ve gotten PPSV23
+  * No or unsure if they've gotten PPSV23
 
 =============================================================
 */
