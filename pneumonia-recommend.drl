@@ -518,32 +518,32 @@ rule "PNEUMONIA RECOMMENDATION RULE 4 65 OR OLDER NOT IMMUNOCOMPROMISED"
     $patient : Patient()
     FhirPatient(ageInYears >= 65 )
 
-    // NOT immunocompromised
-    exists ( String ( toString() == "PVAC_NOT_IMMUNOCOMPROMISED" ) )
-
-    // No PPSV23 after 65 years old
-// *** NEED FUNCTION TO CHECK FOR THIS
-
-    // NO PPSV23 in last 5 years
-    List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(1825), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))
-    List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(1825), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
-
-// *** NOT REPRESENTING BELOW LOGIC QUITE RIGHT, SINCE SURVEY RESPONSE CHECK
-// SHOULD BE INCLUDED IN "OR" CLAUSE
-
-    // PCV13 a year or more ago OR patient says they've gotten PCV13
-    (
-      List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))
-      or
-      List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
-    )
-
     // Survey Responses
     $requestContext: CDSRequestContext()
     $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
     // Answered YES or UNSURE to "Have you had the PCV13 Pneumonia Vaccine since turning 65?"
-    $pvac1healthypcv13 : String(this in ("1", "3") ) from getAnswerValueString($response, "PVAC-1-HEALTHY.PCV13") 
+    $pvac1healthypcv13 : String() from getAnswerValueString($response, "PVAC-1-HEALTHY.PCV13")
+
+    // NOT immunocompromised
+    exists ( String ( toString() == "PVAC_NOT_IMMUNOCOMPROMISED" ) )
+
+    // No PPSV23 after 65 years old
+    List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getRepeatedEventJoda(65, $patient.getBirthDate()), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))
+    List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getRepeatedEventJoda(65, $patient.getBirthDate()), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
+
+    // NO PPSV23 in last 5 years
+    List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(1825), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))
+    List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(1825), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
+
+    // PCV13 a year or more ago OR patient says they've gotten PCV13
+    exists(
+      List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))
+      or
+      List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
+      or
+      String(this in ("1", "3") ) from $pvac1healthypcv13
+    )
 
   then
     // Recommend PPSV23
