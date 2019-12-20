@@ -25,7 +25,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 1 IMMUNOCOMPROMISING_CRITERIA"
     $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
     // Did NOT answer YES to "Do you have any of these immunocompromising conditions for pneumonia conditions ...?"
-    Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-IMMU", "http://regenstrief.org/CDS/code/yesnounsure", "1")
+    Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-IMMU", "http://regenstrief.org/CDS/code/yesno", "1")
 
     List( size == 0 ) from collect( FhirResultObject() from getResult( patientRegistrations,
     [ "http://hl7.org/fhir/sid/icd-9-cm|279",
@@ -317,7 +317,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 2 HIGH_RISK_CRITERIA"
     $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
     // Did NOT answer YES to "Do you have any of these high risk for pneumonia conditions?"
-    Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-HR", "http://regenstrief.org/CDS/code/yesnounsure", "1")
+    Boolean(booleanValue == false) from codedAnswerEquals($response, "PVAC-1-HR", "http://regenstrief.org/CDS/code/yesno", "1")
 
     // Congestive heart failure
     List( size == 0 ) from collect( FhirResultObject() from getResult( patientRegistrations,
@@ -427,7 +427,7 @@ For older than 65, give PCV13 if:
   * No PPSV23 within 1 year
 
 For older than 65 not immunocompromised, give PPSV23 if:
-  * No PPSV23 after 65yo
+  * No PPSV23 after 65yo (or pt unsure)
   * No PPSV23 within 5 years
   * (PCV13 at least 1 year ago OR patient says they've gotten PCV13)
 
@@ -468,8 +468,8 @@ rule "PNEUMONIA RECOMMENDATION RULE 3 65 OR OLDER "
     $requestContext: CDSRequestContext()
     $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-    // Answered NO or UNSURE to "Have you had the PCV13 Pneumonia Vaccine since turning 65?"
-    $pvac1healthypcv13 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-HEALTHY.PCV13") 
+    // Answered NO or UNSURE to "Have you had the PCV13 Pneumonia Vaccine?"
+    $pvac1pcv13 : String(this in ("2", "3")) from getAnswerValueString($response, "PVAC-1.PCV13") 
 
     // No PPSV23 within past year (Must wait a year before giving PCV13 after PPSV23)
     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))
@@ -481,9 +481,9 @@ rule "PNEUMONIA RECOMMENDATION RULE 3 65 OR OLDER "
 
     String ind = IndicatorEnum.INFO.name();
 
-    String txt = "Check with your doctor. All adults 65 and over should have the 13-valent pneumoccal conjugate vaccine (PCV13).";
+    String txt = " Check with your doctor. All adults 65 and over should have the 13-valent pneumoccal conjugate vaccine (PCV13).";
 
-    if ( "2".equals($pvac1healthypcv13) ) {
+    if ("2".equals($pvac1pcv13)) {
       ind = IndicatorEnum.WARNING.name();
       txt = "All adults 65 and over should have the 13-valent pneumoccal conjugate vaccine (PCV13).";
     }
@@ -522,8 +522,8 @@ rule "PNEUMONIA RECOMMENDATION RULE 4 65 OR OLDER NOT IMMUNOCOMPROMISED"
     $requestContext: CDSRequestContext()
     $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-    // Answered YES or UNSURE to "Have you had the PCV13 Pneumonia Vaccine since turning 65?"
-    $pvac1healthypcv13 : String() from getAnswerValueString($response, "PVAC-1-HEALTHY.PCV13")
+    // Response to "Have you had the PCV13 Pneumonia Vaccine?"
+    $pvac1pcv13 : String() from getAnswerValueString($response, "PVAC-1.PCV13")
 
     // NOT immunocompromised
     exists ( String ( toString() == "PVAC_NOT_IMMUNOCOMPROMISED" ) )
@@ -532,17 +532,20 @@ rule "PNEUMONIA RECOMMENDATION RULE 4 65 OR OLDER NOT IMMUNOCOMPROMISED"
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getRepeatedEventJoda(65, $patient.getBirthDate()), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getRepeatedEventJoda(65, $patient.getBirthDate()), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
 
+    // Responded NO or UNSURE to "Have you had the PPSV23 Pneumonia Vaccine since turning 65?"
+    $pvac1ppsv23since65yr : String(this in ("2", "3")) from getAnswerValueString($response, "PVAC-1.PPSV23.SINCE.65YR") 
+
     // NO PPSV23 in last 5 years
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(1825), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))
     List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(1825), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
 
     // PCV13 a year or more ago OR patient says they've gotten PCV13
     exists(
-      List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))
+      List(size > 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))
       or
-      List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
+      List(size > 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
       or
-      String(this in ("1", "3") ) from $pvac1healthypcv13
+      String(this in ("1", "3")) from $pvac1pcv13
     )
 
   then
@@ -553,7 +556,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 4 65 OR OLDER NOT IMMUNOCOMPROMISED"
 
     String txt = "Check with your doctor. All adults 65 and over should have the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after the 13-valent pneumoccal conjugate vaccine (PCV13).";
 
-    if ( "2".equals($pvac1healthypcv13) ) {
+    if ( $pvac1ppsv23since65yr == null || "2".equals($pvac1ppsv23since65yr) ) {
       ind = IndicatorEnum.WARNING.name();
       txt = "All adults 65 and over should have the 23-valent pneumococcal vaccine (PPSV23) at least 1 year after the 13-valent pneumoccal conjugate vaccine (PCV13).";
     }
@@ -587,29 +590,29 @@ rule "PNEUMONIA RECOMMENDATION RULE 5 IMMUNOCOMPROMISED"
   when
     $patient : Patient()
 
+    // Survey Responses
+    $requestContext: CDSRequestContext()
+    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
+
+    // Response to "Have you had the PCV13 Pneumonia Vaccine?"
+    $pvac1pcv13 : String() from getAnswerValueString($response, "PVAC-1.PCV13") 
+
     // Immunocompromised
     not( exists ( String ( toString() == "PVAC_NOT_IMMUNOCOMPROMISED" ) ) )
 
     // NO PPSV23 in last 5 years
     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))  
-    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
-
-// *** NOT REPRESENTING BELOW LOGIC QUITE RIGHT, SINCE SURVEY RESPONSE CHECK
-// SHOULD BE INCLUDED IN "OR" CLAUSE
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
+    $pvac1ppsv23within5yr : String(this in ("2", "3")) from getAnswerValueString($response, "PVAC-1.PPSV23.WITHIN.5YR")
 
     // PCV13 more than 8 weeks ago OR patient says they've gotten PCV13
-    (
-      List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(56), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))  
+    exists(
+      List(size > 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(56), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))  
       or
-      List(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(56), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
+      List(size > 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90670"), getWithinLastDayJoda(56), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
+      or
+      String(this in ("1")) from $pvac1pcv13
     )
-
-    // Survey Responses
-    $requestContext: CDSRequestContext()
-    $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
-
-    // Answered YES to "Have you had the PCV13 Pneumonia Vaccine since turning 65?"
-    $pvac1healthypcv13 : String(this in ("1") ) from getAnswerValueString($response, "PVAC-1-HEALTHY.PCV13") 
 
   then
     // Recommend PPSV23
@@ -619,7 +622,9 @@ rule "PNEUMONIA RECOMMENDATION RULE 5 IMMUNOCOMPROMISED"
 
     String txt = "Check with your doctor. Immunocompromised adults should have the 23-valent pneumococcal vaccine (PPSV23) at least 8 weeks after the 13-valent pneumoccal conjugate vaccine (PCV13).";
 
-    if ( "2".equals($pvac1healthypcv13) ) {
+    if (
+        $pvac1ppsv23within5yr == null || "2".equals($pvac1ppsv23within5yr)
+      ) {
       ind = IndicatorEnum.WARNING.name();
       txt = "Immunocompromised adults should have the 23-valent pneumococcal vaccine (PPSV23) at least 8 weeks after the 13-valent pneumoccal conjugate vaccine (PCV13).";
     }
@@ -665,11 +670,8 @@ rule "PNEUMONIA RECOMMENDATION RULE 6 UNDER 65 AND IMMUNOCOMPROMISED"
     $requestContext: CDSRequestContext()
     $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
-    // Answered NO or UNSURE to "Have you had the PCV13 Pneumonia Vaccine since turning 65?"
-    $pvac1healthypcv13 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-HEALTHY.PCV13") 
-
     // Answered NO or UNSURE to "Have you had the PCV13 Pneumonia Vaccine?"
-    $pvac1immupcv13 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-IMMU.PCV13") 
+    $pvac1pcv13 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1.PCV13") 
 
   then
     // Recommend PCV13
@@ -679,7 +681,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 6 UNDER 65 AND IMMUNOCOMPROMISED"
 
     String txt = "Check with your doctor. Immunocompromised adults should have the 13-valent pneumoccal conjugate vaccine (PCV13).";
 
-    if ( "2".equals($pvac1immupcv13) ) {
+    if ( "2".equals($pvac1pcv13) ) {
       ind = IndicatorEnum.WARNING.name();
       txt = "Immunocompromised adults should have the 13-valent pneumoccal conjugate vaccine (PCV13).";
     }
@@ -728,7 +730,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 7 UNDER 65 AND HIGH RISK"
     $response: QuestionnaireResponse() from $requestContext.get("questionnaireResponse")
 
     // Answered NO or UNSURE to "Have you gotten the PPSV23 pneumonia vaccine?"
-    $pvac1hrpcv13 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1-HR.PPSV23") 
+    $pvac1pcv13 : String(this in ("2", "3") ) from getAnswerValueString($response, "PVAC-1.PPSV23") 
 
   then
     // Recommend PPSV23
@@ -738,7 +740,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 7 UNDER 65 AND HIGH RISK"
 
     String txt = "Check with your doctor. Adults with certain high risk conditions should have the 23-valent pneumococcal vaccine (PPSV23).";
 
-    if ( "2".equals($pvac1hrpcv13) ) {
+    if ( "2".equals($pvac1pcv13) ) {
       ind = IndicatorEnum.WARNING.name();
       txt = "Adults with certain high risk conditions should have the 23-valent pneumococcal vaccine (PPSV23).";
     }
