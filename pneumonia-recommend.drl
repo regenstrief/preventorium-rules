@@ -714,6 +714,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 7 UNDER 65 AND HIGH RISK"
 
   when
     $patient : Patient()
+    FhirPatient(ageInYears < 65 )
 
     // High Risk
     not ( exists ( String ( toString() == "PVAC_NOT_HIGH_RISK" ) ) )
