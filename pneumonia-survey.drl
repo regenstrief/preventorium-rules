@@ -425,6 +425,10 @@ rule "PNEUMONIA SURVEY RULE 3 NO_COND 65 OR OVER"
         List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
         and
         List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
+        and
+        List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+        and
+        List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
       )
       or
       // No PPSV23 within past 5 years
@@ -432,6 +436,10 @@ rule "PNEUMONIA SURVEY RULE 3 NO_COND 65 OR OVER"
         ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))  
         and
         ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
+        and
+        ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "571631000119106"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))  
+        and
+        ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "571631000119106"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
       )
     )
 
@@ -503,6 +511,10 @@ rule "PNEUMONIA SURVEY RULE 4 Immunocompromised 19 OR OVER"
         List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
         and
         List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
+        and
+        List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+        and
+        List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
       )
       or
       // No PPSV23 within past 5 years
@@ -510,6 +522,10 @@ rule "PNEUMONIA SURVEY RULE 4 Immunocompromised 19 OR OVER"
         ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))  
         and
         ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
+        and
+        ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "571631000119106"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))  
+        and
+        ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "571631000119106"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
       )
     )
 
@@ -564,6 +580,10 @@ rule "PNEUMONIA SURVEY RULE 6 No Cond 19 to 64"
         List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
         and
         List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90670", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
+        and
+        List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") );
+        and
+        List( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|459981000124107", null, null, ResultTypeEnum.PROCEDURE, "ANY") );
       )
       or
       // No PPSV23 within past 5 years
@@ -571,6 +591,10 @@ rule "PNEUMONIA SURVEY RULE 6 No Cond 19 to 64"
         ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))  
         and
         ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "90732"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
+        and
+        ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "571631000119106"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.IMMUNIZATION, "ANY"))  
+        and
+        ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "571631000119106"), getWithinLastDayJoda(5*365), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))  
       )
     )
 
@@ -638,6 +662,8 @@ rule "PNEUMONIA SURVEY RULE 7 High Risk 19 to 64"
     // No history of PPSV23
     ArrayList( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") )
     ArrayList( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://www.ama-assn.org/go/cpt|90732", null, null, ResultTypeEnum.PROCEDURE, "ANY") )
+    ArrayList( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|571631000119106", null, null, ResultTypeEnum.IMMUNIZATION, "ANY") ) 
+    ArrayList( size == 0 ) from collect( FhirResultObject() from getResult(patientRegistrations, "http://snomed.info/sct|571631000119106", null, null, ResultTypeEnum.PROCEDURE, "ANY") ) 
 
   then
 
