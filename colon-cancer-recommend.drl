@@ -45,8 +45,11 @@ rule "1 - Family History and NO Screen so CRC Screen Recommended"
     ], true)) or
     Boolean(booleanValue == true) from codedAnswerEquals($response, "5.1", "http://regenstrief.org/CDS/code/yesno", "1")
 
-    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, "http://loinc.org|57803-9", getWithinLastDayJoda(1095), null, ResultTypeEnum.OBSERVATION, "ANY"))
-    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://loinc.org", "82956-4"), getWithinLastDayJoda(365), null, ResultTypeEnum.OBSERVATION, "ANY"))
+    // No FIT within past year
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, "http://loinc.org|57803-9", getWithinLastDayJoda(365), null, ResultTypeEnum.OBSERVATION, "ANY"))
+    // No Cologuard within past 3 years
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://loinc.org", "82956-4"), getWithinLastDayJoda(1095), null, ResultTypeEnum.OBSERVATION, "ANY"))
+    // No colonoscopy within 5 years
     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(1825), null, ResultTypeEnum.PROCEDURE, "ANY"))
 
   then
@@ -104,7 +107,8 @@ rule "2 - History Recent CRC Screen every 5 Recommend"
     // Answered NO or UNSURE to "Have you had a FIT in the past year or FIT-DNA (Colon Guard) in the past 3 years or a Colonoscopy in the past 10 years?"
     $crc61 : String(this in ("2", "3") ) from getAnswerValueString($response, "6.1") 
 
-    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(1780), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
+    // No colonoscopy within 5 years
+    ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(1825), getWithinLastDayJoda(0), ResultTypeEnum.PROCEDURE, "ANY"))
 
     ArrayList(size > 0) from collect(FamilyMemberHistory() from getFamilyMemberHistories( patientRegistrations, [
       "http://snomed.info/sct|425213009",
@@ -181,14 +185,16 @@ rule "3 - Over Fifty No Family History and NO Screen so CRC Screen Recommended"
     // Answered NO or UNSURE to "Have you had a FIT in the past year or FIT-DNA (Colon Guard) in the past 3 years or a Colonoscopy in the past 10 years?"
     $crc61 : String(this in ("2", "3") ) from getAnswerValueString($response, "6.1") 
 
-    // No History of past FIT, FIT-DNA, or Colonoscopy
+    // No FIT within past year
     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, "http://loinc.org|57803-9", getWithinLastDayJoda(365), null, ResultTypeEnum.OBSERVATION, "ANY"))
+    // No Cologuard within past 3 years
     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://loinc.org", "82956-4"), getWithinLastDayJoda(1095), null, ResultTypeEnum.OBSERVATION, "ANY"))
+    // No colonoscopy within past 10 years
     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://snomed.info/sct", "73761001"), getWithinLastDayJoda(3650), null, ResultTypeEnum.PROCEDURE, "ANY"))
     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, buildKeyFromConcept( "http://www.ama-assn.org/go/cpt", "45378"), getWithinLastDayJoda(3650), null, ResultTypeEnum.PROCEDURE, "ANY"))
 
   then
-    // Recommend RIV
+    // Recommend colon cancer screening
     List cards = new ArrayList();
 
     String ind = IndicatorEnum.INFO.name();

@@ -139,7 +139,6 @@ rule "CRC Rule 3 - No History Recent CRC Screen"
     $patient : Patient()
 
     FhirPatient(ageInYears >= 50)
-    FhirPatient(ageInYears < 75)
 
     // No History of past FIT, FIT-DNA, or Colonoscopy
     ArrayList(size == 0) from collect(FhirResultObject() from getResult(patientRegistrations, "http://loinc.org|57803-9", getWithinLastDayJoda(365), getWithinLastDayJoda(0), ResultTypeEnum.OBSERVATION, "ANY"))
