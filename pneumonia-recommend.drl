@@ -516,7 +516,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 4 65 OR OLDER NOT IMMUNOCOMPROMISED"
   dialect "mvel"
   enabled true
   agenda-group "PNEUMONIA_RECOMMENDATION"
-  salience 600
+  salience 500
 
   when
     $patient : Patient()
@@ -597,7 +597,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 5 IMMUNOCOMPROMISED"
   dialect "mvel"
   enabled true
   agenda-group "PNEUMONIA_RECOMMENDATION"
-  salience 600
+  salience 400
 
   when
     $patient : Patient()
@@ -671,7 +671,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 6 UNDER 65 AND IMMUNOCOMPROMISED"
   dialect "mvel"
   enabled true
   agenda-group "PNEUMONIA_RECOMMENDATION"
-  salience 600
+  salience 300
 
   when
     $patient : Patient()
@@ -730,7 +730,7 @@ rule "PNEUMONIA RECOMMENDATION RULE 7 UNDER 65 AND HIGH RISK"
   dialect "mvel"
   enabled true
   agenda-group "PNEUMONIA_RECOMMENDATION"
-  salience 600
+  salience 200
 
   when
     $patient : Patient()
